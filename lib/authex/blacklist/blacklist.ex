@@ -3,9 +3,9 @@ defmodule Authex.Blacklist do
   alias Authex.Config
   alias Authex.Token
 
-  @callback get(binary) :: boolean | :error
-  @callback set(binary) :: :ok | :error
-  @callback del(binary) :: :ok | :error
+  @callback handle_get(binary) :: boolean | :error
+  @callback handle_set(binary) :: :ok | :error
+  @callback handle_del(binary) :: :ok | :error
 
   @blacklist Config.blacklist()
 
@@ -13,15 +13,15 @@ defmodule Authex.Blacklist do
     quote location: :keep do
       @behaviour Blacklist
 
-      def get(_) do
+      def handle_get(_) do
         :error
       end
 
-      def set(_) do
+      def handle_set(_) do
         :error
       end
 
-      def del(_) do
+      def handle_del(_) do
         :error
       end
 
@@ -29,42 +29,48 @@ defmodule Authex.Blacklist do
     end
   end
 
-  def get(_, blacklist \\ @blacklist)
-  def get(%Token{jti: jti}, blacklist) do
-    get(jti, blacklist)
+  def get(jti) do
+    get(@blacklist, jti)
   end
-  def get(jti, blacklist) when is_binary(jti) and is_atom(blacklist) do
-    case blacklist do
+  def get(module, %Token{jti: jti}) do
+    get(module, jti)
+  end
+  def get(module, jti) when is_atom(module) and is_binary(jti) do
+    case module do
       false     -> :error
-      blacklist -> apply(blacklist, :get, [jti])
+      module -> apply(module, :handle_get, [jti])
     end
   end
   def get(_, _) do
     :error
   end
 
-  def set(_, blacklist \\ @blacklist)
-  def set(%Token{jti: jti}, blacklist) do
-    set(jti, blacklist)
+  def set(jti) do
+    get(@blacklist, jti)
   end
-  def set(jti, blacklist) when is_binary(jti) and is_atom(blacklist) do
-    case blacklist do
+  def set(module, %Token{jti: jti}) do
+    set(module, jti)
+  end
+  def set(module, jti) when is_atom(module) and is_binary(jti) do
+    case module do
       false     -> :error
-      blacklist -> apply(blacklist, :set, [jti])
+      module -> apply(module, :handle_set, [jti])
     end
   end
   def set(_, _) do
     :error
   end
 
-  def del(_, blacklist \\ @blacklist)
-  def del(%Token{jti: jti}, blacklist) do
-    del(jti, blacklist)
+  def del(jti) do
+    del(@blacklist, jti)
   end
-  def del(jti, blacklist) when is_binary(jti) and is_atom(blacklist) do
-    case blacklist do
+  def del(module, %Token{jti: jti}) do
+    del(module, jti)
+  end
+  def del(module, jti) when is_atom(module) and is_binary(jti) do
+    case module do
       false     -> :error
-      blacklist -> apply(blacklist, :del, [jti])
+      module -> apply(module, :handle_del, [jti])
     end
   end
   def del(_, _) do

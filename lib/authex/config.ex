@@ -4,10 +4,9 @@ defmodule Authex.Config do
       secret when is_binary(secret) -> secret
       nil ->
         case System.get_env("AUTH_SECRET") do
+          secret when is_binary(secret) -> put_secret(secret)
           nil -> 
             {:ok, secret} = Authex.Secret.new()
-            put_secret(secret)
-          secret when is_binary(secret) ->
             put_secret(secret)
         end
     end

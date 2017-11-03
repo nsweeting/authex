@@ -2,6 +2,7 @@ defmodule Authex.Plug.Authentication do
   import Plug.Conn
 
   alias Authex.Config
+  alias Authex.Serializer
 
   @default_opts [
     unauthorized: Config.unauthorized(),
@@ -45,7 +46,7 @@ defmodule Authex.Plug.Authentication do
 
   defp put_current_user(conn, token, options) do
     serializer = Keyword.get(options, :serializer)
-    case apply(serializer, :from_token, [token]) do
+    case Serializer.from_token(serializer, token) do
       :error -> :error
       user -> {:ok, put_private(conn, :authex_current_user, user)}
     end

@@ -3,9 +3,9 @@ defmodule Authex.Serializer do
   alias Authex.Serializer
   alias Authex.Token
 
-  @callback from_token(Token.t) :: term | :error
+  @callback handle_from_token(Token.t) :: term | :error
 
-  @callback for_token(term) :: Token.t | :error
+  @callback handle_for_token(term) :: Token.t | :error
 
   @serializer Config.serializer()
 
@@ -13,11 +13,11 @@ defmodule Authex.Serializer do
     quote location: :keep do
       @behaviour Serializer 
 
-      def from_token(_) do
+      def handle_from_token(_) do
         :error
       end
 
-      def for_token(_) do
+      def handle_for_token(_) do
         :error
       end
 
@@ -25,16 +25,25 @@ defmodule Authex.Serializer do
     end
   end
 
-  def from_token(%Token{} = token, serializer \\ @serializer) do
-    apply(serializer, :from_token, [token])
+  def from_token(%Token{} = token) do
+    from_token(@serializer, token)
+  end
+  def from_token(serializer, %Token{} = token) do
+    apply(serializer, :handle_from_token, [token])
   end
 
-  def for_token(resource, serializer \\ @serializer) do
-    apply(serializer, :for_token, [resource])
+  def for_token(resource) do
+    for_token(@serializer, resource)
+  end
+  def for_token(serializer, resource) do
+    apply(serializer, :handle_for_token, [resource])
   end
 
-  def for_compact_token(resource, serializer \\ @serializer) do
-    case for_token(resource, serializer) do
+  def for_compact_token(resource) do
+    for_compact_token(@serializer, resource)
+  end
+  def for_compact_token(serializer, resource) do
+    case for_token(serializer, resource) do
       :error -> :error
       token  -> Authex.sign(token)
     end

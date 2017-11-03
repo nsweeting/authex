@@ -21,11 +21,9 @@ defmodule Authex do
 
   ## Examples
 
-      iex> Authex.token([sub: 1, jti: "test"], [time: 1500000000, ttl: 10])
-      %Authex.Token{
-        aud: nil, exp: 1500000010, iat: 1500000000, iss: nil,
-        jti: "test", nbf: 1499999999,
-        scopes: [], sub: 1}
+      iex> token = Authex.token([sub: 1], [ttl: 60])
+      iex> with %Authex.Token{sub: sub} <- token, do: sub
+      1
   """
   def token(claims \\ [], options \\ []) do
     Token.new(claims, options)
@@ -43,6 +41,10 @@ defmodule Authex do
     * `:secret` - the secret key to sign the token with.
     * `:alg` - the algorithm to sign the token with.
 
+  ## Examples
+
+      iex> Authex.token() |> Authex.sign() |> is_binary()
+      true
   """
   def sign(%Token{} = token, options \\ []) do
     signer = Signer.new(options)
@@ -62,6 +64,11 @@ defmodule Authex do
     * `:secret` - the secret key to verify the token with.
     * `:alg` - the algorithm to verify the token with.
 
+  ## Examples
+
+      iex> {:ok, token} = [sub: 1] |> Authex.token() |> Authex.sign() |> Authex.verify()
+      iex> with %Authex.Token{sub: sub} <- token, do: sub
+      1
   """
   def verify(compact_token, options \\ []) do
     compact_token
@@ -70,12 +77,16 @@ defmodule Authex do
   end
 
   @doc """
-  Turns a token into a usable resource using a serializer module.
+  Turns a token into a usable data structure using a serializer module.
 
   ## Parameters
 
-    - token: An Authex.Token struct.
+    - token: An Authex.Token struct or compact token binary.
 
+  ## Examples
+
+      iex> [sub: 1] |> Authex.token() |> Authex.sign() |> Authex.from_token()
+      %{id: 1, scopes: []}
   """
   def from_token(%Token{} = token) do
     Serializer.from_token(token)
@@ -88,37 +99,58 @@ defmodule Authex do
   end
 
   @doc """
-  Turns a resource into a compact token using a serializer module.
+  Turns a usable data structure into a compact token using a serializer module.
 
   ## Parameters
 
-    - resource: Any usable resource.
+    - resource: Any usable data structure.
 
+  ## Examples
+
+      iex> %{id: 1} |> Authex.for_token() |> is_binary()
+      true
   """
   def for_token(resource) do
     Serializer.for_compact_token(resource)
   end
 
+  @doc false
   def blacklisted?(token_or_jti) do
     Blacklist.get(token_or_jti)
   end
 
+  @doc false
   def blacklist(token_or_jti) do
     Blacklist.set(token_or_jti)
   end
 
+  @doc false
   def unblacklist(token_or_jti) do
     Blacklist.del(token_or_jti)
   end
 
-  def current_user(%{private: private}) do
+  @doc """
+  Returns the current user from a Plug.Conn.
+
+  ## Parameters
+
+    - conn: A Plug.Conn struct.
+  """
+  def current_user(%{private: private} = _conn) do
     Map.fetch(private, :authex_current_user)
   end
   def current_user(_) do
     :error
   end
 
-  def current_scopes(%{private: private}) do
+  @doc """
+  Returns the current scopes from a Plug.Conn.
+
+  ## Parameters
+
+    - conn: A Plug.Conn struct.
+  """
+  def current_scopes(%{private: private} = _conn) do
     case Map.fetch(private, :authex_token) do
       {:ok, token} -> Map.fetch(token, :scopes)
       :error -> :error

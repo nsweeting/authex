@@ -3,14 +3,14 @@ defmodule Authex.Serializer.Basic do
 
   alias Authex.Token
 
-  def from_token(%Token{sub: sub, scopes: scopes}) do
+  def handle_from_token(%Token{sub: sub, scopes: scopes}) do
     %{id: sub, scopes: scopes}
   end
 
-  def for_token(%{id: id, scopes: scopes}) do
+  def handle_for_token(%{id: id, scopes: scopes}) do
     Token.new([sub: id, scopes: scopes])
   end
-  def for_token(%{id: id}) do
+  def handle_for_token(%{id: id}) do
     Token.new([sub: id])
   end
 end

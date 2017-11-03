@@ -26,6 +26,26 @@ defmodule Authex.Verifier do
     blacklist: Config.blacklist(),
   ]
 
+  @doc """
+  Creates a new Authex.Verifier struct from the compact token and options.
+
+  ## Parameters
+
+    - compact: A binary compact token.
+    - options: A keyword list of options.
+
+  ## Options
+    * `:time` - the base time (timestamp format) in which to use.
+    * `:secret` - the secret to verify the token with..
+    * `:alg` - the algorithm to verify the token with.
+    * `:blacklist` - the blacklist module to check the jti claim with.
+
+  ## Examples
+
+      iex> verifier = Authex.Verifier.new("token")
+      iex> with %Authex.Verifier{compact: compact} <- verifier, do: compact
+      "token"
+  """
   def new(compact, options \\ []) do
     options   = Keyword.merge(@default_opts, options)
     time      = Keyword.get(options, :time, :os.system_time(:seconds))
@@ -41,6 +61,23 @@ defmodule Authex.Verifier do
     |> put_blacklist(blacklist)
   end
 
+  @doc """
+  Runs an Authex.Verifier struct - checking that the token is valid.
+
+  ## Parameters
+
+    - verifier: An Authex.Verifier struct.
+
+  ## Examples
+
+      iex> {:ok, token} = [sub: 1]
+      ...> |> Authex.token()
+      ...> |> Authex.sign()
+      ...> |> Authex.Verifier.new()
+      ...> |> Authex.Verifier.run()
+      iex> with %Authex.Token{sub: sub} <- token, do: sub
+      1
+  """
   def run(%Verifier{jwk: jwk, alg: alg, time: time, blacklist: blacklist, compact: compact}) do
     with {:ok, claims} <- check_token(jwk, alg, compact),
          token <- Token.from_map(claims),
@@ -54,19 +91,23 @@ defmodule Authex.Verifier do
     end
   end
 
+  @doc false
   def put_time(verifier, time) do
     %{verifier | time: time}
   end
 
+  @doc false
   def put_compact(verifier, compact) do
     %{verifier | compact: compact}
   end
 
+  @doc false
   def put_jwk(verifier, secret) do
     jwk = %{"kty" => "oct", "k" => secret}
     %{verifier | jwk: jwk}
   end
 
+  @doc false
   def put_alg(verifier, :hs256) do
     %{verifier | alg: ["HS256"]}
   end
@@ -80,6 +121,7 @@ defmodule Authex.Verifier do
     %{verifier | alg: []}
   end
 
+  @doc false
   def put_blacklist(verifier, blacklist) do
     %{verifier | blacklist: blacklist}
   end
