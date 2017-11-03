@@ -17,7 +17,7 @@ defmodule Authex.Plug.Authorization do
   def call(conn, options) do
     with {:ok, permits} <- fetch_permits(options),
          {:ok, action} <- fetch_action(conn),
-         {:ok, scopes} <- fetch_scopes(conn),
+         {:ok, scopes} <- fetch_current_scopes(conn),
          {:ok, current_scope} <- verify_scope(permits, action, scopes),
          {:ok, conn} <- assign_current_scope(conn, current_scope)
     do
@@ -46,10 +46,9 @@ defmodule Authex.Plug.Authorization do
     end
   end
 
-  defp fetch_scopes(%{assigns: %{token_scopes: scopes}}) do
-    {:ok, scopes}
+  defp fetch_current_scopes(conn) do
+    Authex.current_scopes(conn)
   end
-  defp fetch_scopes(_), do: :error
 
   defp verify_scope(permits, action, scopes) do
     current_scopes = Enum.map(permits, fn permit ->
@@ -63,7 +62,7 @@ defmodule Authex.Plug.Authorization do
   end
 
   defp assign_current_scope(conn, current_scope) do
-    {:ok, assign(conn, :current_scope, current_scope)}
+    {:ok, put_private(conn, :authex_current_scope, current_scope)}
   end
 
   defp forbidden(conn, options) do

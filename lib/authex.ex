@@ -117,4 +117,14 @@ defmodule Authex do
   def current_user(_) do
     :error
   end
+
+  def current_scopes(%{private: private}) do
+    case Map.fetch(private, :authex_token) do
+      {:ok, token} -> Map.fetch(token, :scopes)
+      :error -> :error
+    end
+  end
+  def current_scopes(_) do
+    :error
+  end
 end

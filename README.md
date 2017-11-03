@@ -61,7 +61,7 @@ config :authex, [
 
 The above config is all the defaults "out of the box".
 
-## Examples
+## Usage by Example
 
 Create a token using the default serializer. This assumes users have an `id` field.
 
@@ -133,15 +133,63 @@ defmodule MyApp.Web.UserController do
 
   def show(conn, _params) do
     with {:ok, %{id: id}} <- Authex.current_user(conn),
-         {:ok, account} <- MyApp.Accounts.get(id)
+         {:ok, user} <- MyApp.Users.get(id)
     do
-      render(conn, "show.json", account: account)
+      render(conn, "show.json", user: user)
     end
   end
 
   defp authenticate(conn, _opts) do
     opts = Authex.Plug.Authentication.init([serializer: MyApp.TokenSerializer])
     Authex.Plug.Authentication.call(conn, opts)
+  end
+end
+```
+
+Authorize a user to access a particular endpoint using their token scopes.
+
+Authorization works by combining the "permits" with the "type" of request that
+is being made.
+
+For example, with our controller below, we are permitting "user" and "admin"
+access. The show action would be a `GET` request, and would therefore be a "read"
+type.
+
+So, in order to access the show action, our token would require one of the
+two following scopes: `["user/read", "admin/read"].
+
+Requests are bucketed under the following types:
+
+  * "GET" - "read"
+  * "HEAD" - "read"
+  * "PUT" - "write"
+  * "PATCH" - "write"
+  * "POST" - "write"
+  * "DELETE" - "delete"
+
+```elixir
+defmodule MyApp.Web.UserController do
+  use MyApp.Web, :controller
+
+  plug :authenticate
+  plug :authorize, permits: ["user", "admin"]
+
+  def show(conn, _params) do
+    with {:ok, %{id: id}} <- Authex.current_user(conn),
+         {:ok, user} <- MyApp.Users.get(id)
+    do
+      render(conn, "show.json", user: user)
+    end
+  end
+
+  defp authenticate(conn, _opts) do
+    opts = Authex.Plug.Authentication.init([serializer: MyApp.TokenSerializer])
+    Authex.Plug.Authentication.call(conn, opts)
+  end
+
+  defp authorize(conn, opts) do
+    opts = Authex.Plug.Authorization.init(opts)
+    Authex.Plug.Authorization.call(conn, opts)
   end
 end
 ```

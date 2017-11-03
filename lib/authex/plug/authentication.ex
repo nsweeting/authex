@@ -15,10 +15,10 @@ defmodule Authex.Plug.Authentication do
 
   @spec call(Plug.Conn.t, list) :: Plug.Conn.t
   def call(conn, options) do
-    with {:ok, compact} <- fetch_token(conn),
+    with {:ok, compact} <- fetch_header_token(conn),
          {:ok, token} <- Authex.verify(compact),
-         {:ok, conn} <- assign_user(conn, token, options),
-         {:ok, conn} <- assign_scopes(conn, token)
+         {:ok, conn} <- put_token(conn, token),
+         {:ok, conn} <- put_current_user(conn, token, options)
     do
       conn
     else
@@ -26,29 +26,29 @@ defmodule Authex.Plug.Authentication do
     end
   end
 
-  defp fetch_token(conn) do
+  defp fetch_header_token(conn) do
     case get_req_header(conn, "authorization") do
-      [header] -> {:ok, extract_token(header)}
+      [header] -> {:ok, parse_header(header)}
       _        -> :error
     end
   end
 
-  defp assign_user(conn, token, options) do
+  defp parse_header(header) do
+    header
+    |> String.split()
+    |> List.last()
+  end
+
+  defp put_token(conn, token) do
+    put_private(conn, :authex_token, token)
+  end
+
+  defp put_current_user(conn, token, options) do
     serializer = Keyword.get(options, :serializer)
     case apply(serializer, :from_token, [token]) do
       :error -> :error
       user -> {:ok, put_private(conn, :authex_current_user, user)}
     end
-  end
-
-  defp assign_scopes(conn, token) do
-    assign(conn, :token_scopes, token.scopes)
-  end
-
-  defp extract_token(header) do
-    header
-    |> String.split()
-    |> List.last()
   end
 
   defp unauthorized(conn, options) do
