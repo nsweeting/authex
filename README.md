@@ -73,7 +73,7 @@ MyApp.User
 ```
 
 Create a token with the sub and iss claim set. The token will also have a time
-to live of 60 seconds. `Authex.token/1` returns an Authex.Token struct. `Authex.sign/1`
+to live of 60 seconds. `Authex.token/1` returns an `Authex.Token` struct. `Authex.sign/1`
 creates a compact token from an `Authex.Token` struct.
 
 ```elixir
@@ -82,7 +82,7 @@ token = Authex.token([sub: user.id, iss: "myapp"], [ttl: 60])
 Authex.sign(token)
 ```
 
-Verify a compact token and return a `Authex.Token` struct.
+Verify a compact token and return an `Authex.Token` struct.
 
 ```elixir
 MyApp.User
