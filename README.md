@@ -63,6 +63,8 @@ The above config is all the defaults "out of the box".
 
 ## Usage by Example
 
+Here are some basic examples on how to use Authex.
+
 Create a token using the default serializer. This assumes users have an `id` field.
 
 ```elixir
@@ -146,17 +148,18 @@ defmodule MyApp.Web.UserController do
 end
 ```
 
-Authorize a user to access a particular endpoint using their token scopes.
-
-Authorization works by combining the "permits" with the "type" of request that
-is being made.
+Authorize a user to access a particular endpoint using their token scopes. Authorization
+works by combining the "permits" with the "type" of request that is being made.
 
 For example, with our controller below, we are permitting "user" and "admin"
 access. The show action would be a `GET` request, and would therefore be a "read"
 type.
 
 So, in order to access the show action, our token would require one of the
-two following scopes: `["user/read", "admin/read"].
+two following scopes: `["user/read", "admin/read"]`.
+
+If a user fails to meet the scope requirements with their token, it will put a
+403 status and halt the conn.
 
 Requests are bucketed under the following types:
 
