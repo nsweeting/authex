@@ -3,14 +3,14 @@ defmodule Authex.Plug.Authentication do
 
   alias Authex.Config
 
-  @unauthorized Config.get(:unauthorized, Authex.Plug.Unauthorized)
-  @serializer Config.serializer()
+  @default_opts [
+    unauthorized: Config.unauthorized(),
+    serializer:   Config.serializer(),
+  ]
 
   @spec init(list) :: list
   def init(options \\ []) do
-    options
-    |> Keyword.put_new(:unauthorized, @unauthorized)
-    |> Keyword.put_new(:serializer, @serializer)
+    Keyword.merge(@default_opts, options)
   end
 
   @spec call(Plug.Conn.t, list) :: Plug.Conn.t

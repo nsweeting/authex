@@ -2,17 +2,25 @@ defmodule Authex.Signer do
   alias Authex.Config
   alias Authex.Signer
 
+  @type t :: %__MODULE__{
+    jwk:         integer,
+    jws:         integer
+  }
+
   defstruct [
     :jwk,
     :jws,
   ]
 
-  @secret Config.secret()
-  @default_alg Config.get(:default_alg, :hs256)
+  @default_opts [
+    secret: Config.secret(),
+    alg:    Config.default_alg()
+  ]
 
   def new(options \\ []) do
-    secret = Keyword.get(options, :secret, @secret)
-    alg    = Keyword.get(options, :alg, @default_alg)
+    options = Keyword.merge(@default_opts, options)
+    secret  = Keyword.get(options, :secret)
+    alg     = Keyword.get(options, :alg)
   
     %Signer{}
     |> put_jwk(secret)

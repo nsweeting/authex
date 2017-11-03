@@ -18,8 +18,7 @@ defmodule Authex.Mixfile do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      extra_applications: [:logger],
-      mod: {Authex.Application, []}
+      extra_applications: [:logger]
     ]
   end
 

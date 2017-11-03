@@ -1,9 +1,10 @@
 defmodule Authex do
   alias Authex.{
-    Token,
+    Blacklist,
+    Serializer,
     Signer,
+    Token,
     Verifier,
-    Serializer
   }
 
   @doc """
@@ -54,7 +55,7 @@ defmodule Authex do
 
   ## Parameters
 
-    - token: An Authex.Token struct.
+    - compact_token: A compact token binary.
     - options: A keyword list of options.
 
   ## Options
@@ -76,12 +77,12 @@ defmodule Authex do
     - token: An Authex.Token struct.
 
   """
-  def deserialize(%Token{} = token) do
+  def from_token(%Token{} = token) do
     Serializer.from_token(token)
   end
-  def deserialize(compact_token) when is_binary(compact_token) do
+  def from_token(compact_token) when is_binary(compact_token) do
     case verify(compact_token) do
-      {:ok, token} -> deserialize(token)
+      {:ok, token} -> from_token(token)
       error -> error
     end
   end
@@ -94,9 +95,19 @@ defmodule Authex do
     - resource: Any usable resource.
 
   """
-  def serialize(resource) do
-    resource
-    |> Serializer.for_token()
-    |> sign()
+  def for_token(resource) do
+    Serializer.for_compact_token(resource)
+  end
+
+  def blacklisted?(token_or_jti) do
+    Blacklist.get(token_or_jti)
+  end
+
+  def blacklist(token_or_jti) do
+    Blacklist.set(token_or_jti)
+  end
+
+  def unblacklist(token_or_jti) do
+    Blacklist.del(token_or_jti)
   end
 end

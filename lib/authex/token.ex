@@ -24,21 +24,28 @@ defmodule Authex.Token do
     scopes:  [],
   ]
 
-  @default_ttl Config.get(:default_ttl, 3600)
-  @default_iss Config.get(:default_iss)
-  @default_aud Config.get(:default_aud)
-  @jti_mfa Config.get(:jti_mfa, {UUID, :uuid4, [:hex]})
+  @default_opts [
+    ttl:     Config.default_ttl(),
+  ]
+
+  @default_claims [
+    iss:     Config.default_iss(),
+    aud:     Config.default_aud(),
+    jti:     Config.jti_mfa(),
+    scopes:  Config.default_scopes(),
+  ]
 
   @spec new(list, list) :: t
   def new(claims \\ [], options \\ []) do
+    claims  = Keyword.merge(@default_claims, claims)
+    options = Keyword.merge(@default_opts, options)
     time    = Keyword.get(options, :time, :os.system_time(:seconds))
-    ttl     = Keyword.get(options, :ttl, @default_ttl)
-
+    ttl     = Keyword.get(options, :ttl)
     sub     = Keyword.get(claims, :sub)
-    aud     = Keyword.get(claims, :aud, @default_aud)
-    iss     = Keyword.get(claims, :iss, @default_iss)
-    jti     = Keyword.get(claims, :jti, @jti_mfa)
-    scopes  = Keyword.get(claims, :scopes, [])
+    aud     = Keyword.get(claims, :aud)
+    iss     = Keyword.get(claims, :iss)
+    jti     = Keyword.get(claims, :jti)
+    scopes  = Keyword.get(claims, :scopes)
 
     %Token{}
     |> put_iat(time)
@@ -65,6 +72,7 @@ defmodule Authex.Token do
     |> Map.from_struct()
     |> Map.to_list()
     |> Enum.map(fn({key, val}) -> {Atom.to_string(key), val} end)
+    |> Enum.reject(fn({_, val}) -> val == nil end)
     |> Map.new()
   end
 
@@ -79,18 +87,18 @@ defmodule Authex.Token do
   end
 
   @spec put_exp(t, integer, integer) :: t
-  def put_exp(token, time, ttl) when is_integer(ttl) do
+  def put_exp(token, time, ttl) do
     %{token | exp: time + ttl}
-  end
-  def put_exp(token, time, _) do
-    %{token | exp: time + @default_ttl}
   end
 
   @spec put_jti(t, binary | tuple) :: t
+  def put_jti(token, false) do
+    %{token | jti: nil}
+  end
   def put_jti(token, {mod, fun, args}) do
     %{token | jti: apply(mod, fun, args)}
   end
-  def put_jti(token, jti)when is_binary(jti) do
+  def put_jti(token, jti) when is_binary(jti) do
     %{token | jti: jti}
   end
 
@@ -125,5 +133,12 @@ defmodule Authex.Token do
   end
   def has_scope?(_, _) do
     false
+  end
+
+  def generate(length \\ 64) do
+    length
+    |> :crypto.strong_rand_bytes()
+    |> Base.url_encode64(padding: false)
+    |> binary_part(0, length)
   end
 end

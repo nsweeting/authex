@@ -1,7 +1,16 @@
 defmodule Authex.Verifier do
+  alias Authex.Blacklist
   alias Authex.Config
   alias Authex.Token
   alias Authex.Verifier
+
+  @type t :: %__MODULE__{
+    time:         integer,
+    jwk:          integer,
+    alg:          integer,
+    blacklist:    binary,
+    compact:      binary,
+  }
 
   defstruct [
     :time, 
@@ -11,15 +20,18 @@ defmodule Authex.Verifier do
     :compact
   ]
 
-  @secret Config.secret()
-  @default_alg Config.get(:default_alg, :hs256)
-  @blacklist Config.get(:blacklist, Authex.Blacklist)
+  @default_opts [
+    alg:       Config.default_alg(),
+    secret:    Config.secret(),
+    blacklist: Config.blacklist(),
+  ]
 
   def new(compact, options \\ []) do
+    options   = Keyword.merge(@default_opts, options)
     time      = Keyword.get(options, :time, :os.system_time(:seconds))
-    secret    = Keyword.get(options, :secret, @secret)
-    alg       = Keyword.get(options, :alg, @default_alg)
-    blacklist = Keyword.get(options, :blacklist, @blacklist)
+    secret    = Keyword.get(options, :secret)
+    alg       = Keyword.get(options, :alg)
+    blacklist = Keyword.get(options, :blacklist)
 
     %Verifier{}
     |> put_time(time)
@@ -94,8 +106,18 @@ defmodule Authex.Verifier do
     {:error, :expired}
   end
 
-  # WIP
-  defp check_blacklist(_, _) do
+  defp check_blacklist(false, _) do
     :ok
+  end
+  defp check_blacklist(blacklist, jti)
+  when is_atom(blacklist) and is_binary(jti) do
+    case Blacklist.get(blacklist, jti) do
+      false  -> :ok
+      true   -> {:error, :blacklisted}
+      :error -> {:error, :blacklist_error}      
+    end
+  end
+  defp check_blacklist(_, _) do
+    {:error, :jti_unverified}
   end
 end
