@@ -40,7 +40,7 @@ not set one via config.
 config :authex, [
   # REQUIRED
   # The secret used to sign tokens with.
-  secret: "mysecret"
+  secret: "mysecret",
 
   # OPTIONAL
   # A blacklist module, or false if disabled.
@@ -73,8 +73,8 @@ MyApp.User
 ```
 
 Create a token with the sub and iss claim set. The token will also have a time
-to live of 60 seconds. Authex.token/1 returns an Authex.Token struct. Authex.sign/1
-creates a compact token from an Authex.Token struct.
+to live of 60 seconds. `Authex.token/1` returns an Authex.Token struct. `Authex.sign/1`
+creates a compact token from an `Authex.Token` struct.
 
 ```elixir
 user = MyApp.Repo.get(MyApp.User, 1)
@@ -82,7 +82,7 @@ token = Authex.token([sub: user.id, iss: "myapp"], [ttl: 60])
 Authex.sign(token)
 ```
 
-Verify a compact token and return a Authex.Token struct.
+Verify a compact token and return a `Authex.Token` struct.
 
 ```elixir
 MyApp.User
