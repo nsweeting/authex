@@ -1,5 +1,8 @@
 # Authex
 
+[![Build Status](https://travis-ci.org/nsweeting/authex.svg?branch=master)](https://travis-ci.org/nsweeting/authex)
+[![Authex Version](https://img.shields.io/hexpm/v/authex.svg)](https://hex.pm/packages/authex)
+
 **TODO: Add description**
 
 ## Installation
