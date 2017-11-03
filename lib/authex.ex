@@ -110,4 +110,11 @@ defmodule Authex do
   def unblacklist(token_or_jti) do
     Blacklist.del(token_or_jti)
   end
+
+  def current_user(%{private: private}) do
+    Map.fetch(private, :authex_current_user)
+  end
+  def current_user(_) do
+    :error
+  end
 end

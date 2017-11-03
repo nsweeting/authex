@@ -37,7 +37,7 @@ defmodule Authex.Plug.Authentication do
     serializer = Keyword.get(options, :serializer)
     case apply(serializer, :from_token, [token]) do
       :error -> :error
-      user -> {:ok, assign(conn, :current_user, user)}
+      user -> {:ok, put_private(conn, :authex_current_user, user)}
     end
   end
 

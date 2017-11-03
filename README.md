@@ -115,3 +115,33 @@ defmodule MyApp.TokenSerializer do
 end
 
 ```
+
+Authenticate a Phoenix controller using a custom serializer. `Authex.Plug.Authenticate`
+looks for the `Authenicate: Bearer mytoken` header. It will then verify,
+and deserialize the token using the provided serializer.
+
+If any of these steps fails, it will put a 401 status and halt the conn.
+
+Otherwise, the plug will place the value returned from the serializer into the conn.
+You can access this value again using `Authex.current_user/1`.
+
+```elixir
+defmodule MyApp.Web.UserController do
+  use MyApp.Web, :controller
+
+  plug :authenticate
+
+  def show(conn, _params) do
+    with {:ok, %{id: id}} <- Authex.current_user(conn),
+         {:ok, account} <- MyApp.Accounts.get(id)
+    do
+      render(conn, "show.json", account: account)
+    end
+  end
+
+  defp authenticate(conn, _opts) do
+    opts = Authex.Plug.Authentication.init([serializer: MyApp.TokenSerializer])
+    Authex.Plug.Authentication.call(conn, opts)
+  end
+end
+```
