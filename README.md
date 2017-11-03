@@ -29,7 +29,6 @@ for this.
 
 ```
 mix authex.gen.secret
-# secret here
 ```
 
 We should now add this secret to our config. In production this should be set via
