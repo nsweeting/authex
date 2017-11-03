@@ -11,11 +11,15 @@ defmodule Authex.Verifier do
     :compact
   ]
 
+  @secret Config.secret()
+  @default_alg Config.get(:default_alg, :hs256)
+  @blacklist Config.get(:blacklist, Authex.Blacklist)
+
   def new(compact, options \\ []) do
     time      = Keyword.get(options, :time, :os.system_time(:seconds))
-    secret    = Keyword.get(options, :secret, Config.secret())
-    alg       = Keyword.get(options, :alg, :hs256)
-    blacklist = Keyword.get(options, :blacklist, Authex.Blacklist)
+    secret    = Keyword.get(options, :secret, @secret)
+    alg       = Keyword.get(options, :alg, @default_alg)
+    blacklist = Keyword.get(options, :blacklist, @blacklist)
 
     %Verifier{}
     |> put_time(time)

@@ -7,9 +7,12 @@ defmodule Authex.Signer do
     :jws,
   ]
 
+  @secret Config.secret()
+  @default_alg Config.get(:default_alg, :hs256)
+
   def new(options \\ []) do
-    secret = Keyword.get(options, :secret, Config.secret())
-    alg    = Keyword.get(options, :alg, :hs256)
+    secret = Keyword.get(options, :secret, @secret)
+    alg    = Keyword.get(options, :alg, @default_alg)
   
     %Signer{}
     |> put_jwk(secret)

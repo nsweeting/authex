@@ -6,8 +6,7 @@ defmodule Authex.SignerTest do
   test "new/1 uses the config secret by default" do
     signer = Signer.new()
     refute signer.jwk == %{"kty" => "oct", "k" => "secret"} 
-    Application.put_env(:authex, :secret, "secret")
-    signer = Signer.new()
+    signer = Signer.new([secret: "secret"])
     assert signer.jwk == %{"kty" => "oct", "k" => "secret"}
   end
 

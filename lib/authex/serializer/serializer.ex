@@ -3,6 +3,8 @@ defmodule Authex.Serializer do
   alias Authex.Serializer
   alias Authex.Token
 
+  @serializer Config.serializer()
+
   @callback from_token(Token.t) :: term | :error
 
   @callback for_token(term) :: Token.t | :error
@@ -30,10 +32,10 @@ defmodule Authex.Serializer do
   end
 
   def from_token(token) do
-    apply(Config.serializer(), :from_token, [token])
+    apply(@serializer, :from_token, [token])
   end
 
   def for_token(resource) do
-    apply(Config.serializer(), :for_token, [resource])
+    apply(@serializer, :for_token, [resource])
   end
 end

@@ -25,7 +25,7 @@ defmodule Authex.Mixfile do
 
   defp description do
     """
-    Authex is a simple and opinionated JWT authenication and authorization library.
+    Authex is a simple and opinionated JWT authentication and authorization library.
     """
   end
 

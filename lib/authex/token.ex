@@ -1,4 +1,5 @@
 defmodule Authex.Token do
+  alias Authex.Config
   alias Authex.Token
 
   @type t :: %__MODULE__{
@@ -23,7 +24,10 @@ defmodule Authex.Token do
     scopes:  [],
   ]
 
-  @default_ttl 3600
+  @default_ttl Config.get(:default_ttl, 3600)
+  @default_iss Config.get(:default_iss)
+  @default_aud Config.get(:default_aud)
+  @jti_mfa Config.get(:jti_mfa, {UUID, :uuid4, [:hex]})
 
   @spec new(list, list) :: t
   def new(claims \\ [], options \\ []) do
@@ -31,9 +35,9 @@ defmodule Authex.Token do
     ttl     = Keyword.get(options, :ttl, @default_ttl)
 
     sub     = Keyword.get(claims, :sub)
-    aud     = Keyword.get(claims, :aud)
-    iss     = Keyword.get(claims, :iss)
-    jti     = Keyword.get(claims, :jti, UUID.uuid4(:hex))
+    aud     = Keyword.get(claims, :aud, @default_aud)
+    iss     = Keyword.get(claims, :iss, @default_iss)
+    jti     = Keyword.get(claims, :jti, @jti_mfa)
     scopes  = Keyword.get(claims, :scopes, [])
 
     %Token{}
@@ -82,8 +86,11 @@ defmodule Authex.Token do
     %{token | exp: time + @default_ttl}
   end
 
-  @spec put_jti(t, binary) :: t
-  def put_jti(token, jti) do
+  @spec put_jti(t, binary | tuple) :: t
+  def put_jti(token, {mod, fun, args}) do
+    %{token | jti: apply(mod, fun, args)}
+  end
+  def put_jti(token, jti)when is_binary(jti) do
     %{token | jti: jti}
   end
 

@@ -1,8 +1,10 @@
 defmodule Authex.Plug.Authentication do
   import Plug.Conn
 
-  @unauthorized Authex.Plug.Unauthorized
-  @serializer Authex.Serializer.Basic
+  alias Authex.Config
+
+  @unauthorized Config.get(:unauthorized, Authex.Plug.Unauthorized)
+  @serializer Config.serializer()
 
   @spec init(list) :: list
   def init(options \\ []) do

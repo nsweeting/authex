@@ -1,9 +1,10 @@
 defmodule Authex.Plug.Authorization do
   import Plug.Conn
 
+  alias Authex.Config
   alias Authex.Token
 
-  @forbidden Authex.Plug.Forbidden
+  @forbidden Config.get(:forbidden, Authex.Plug.Forbidden)
 
   @spec init(list) :: list
   def init(options \\ []) do
