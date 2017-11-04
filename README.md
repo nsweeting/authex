@@ -79,6 +79,18 @@ Once we have a `Authex.Token` struct, we can sign it to create a compact token b
 |> Authex.sign()
 ```
 
+## Verifying Tokens
+
+Once we have compact token binary, we can verify it and turn it back to an `Authex.Token` struct.
+
+```elixir
+[sub: 1, scopes: ["admin/read"]]
+|> Authex.token()
+|> Authex.sign()
+|> Authex.verify()
+```
+
+
 ## Creating Tokens with Serializers
 
 Typically, we want to be able to create tokens from another source of data. This could be something like a `User` struct. We also will want to take a token and turn it back into a `User` struct.
