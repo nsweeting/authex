@@ -214,4 +214,6 @@ end
 
 ## Blacklisting Tokens
 
-WIP
+Authex includes the ability to blacklist tokens. The recommended way to do this is with the with [Authex.Blacklist.Redis](https://github.com/nsweeting/authex_blacklist_redis) library. As you can tell by its name, it uses Redis as the blacklist storage medium. Details on setup and config are available for its repo.
+
+Alternatively, you can setup your own blacklist by `use`ing the `Authex.Blacklist` behaviour. The module must implement `handle_get/1`, `handle_set/1` and `handle_del/1`. For an example usage (but not production usable) - check out a [basic example](https://github.com/nsweeting/authex/blob/master/lib/authex/blacklist/basic.ex).
