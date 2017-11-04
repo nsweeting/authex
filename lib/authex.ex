@@ -70,7 +70,7 @@ defmodule Authex do
       iex> with %Authex.Token{sub: sub} <- token, do: sub
       1
   """
-  def verify(compact_token, options \\ []) do
+  def verify(compact_token, options \\ []) do  
     compact_token
     |> Verifier.new(options)
     |> Verifier.run()

@@ -36,7 +36,7 @@ defmodule Authex.Verifier do
 
   ## Options
     * `:time` - the base time (timestamp format) in which to use.
-    * `:secret` - the secret to verify the token with..
+    * `:secret` - the secret to verify the token with.
     * `:alg` - the algorithm to verify the token with.
     * `:blacklist` - the blacklist module to check the jti claim with.
 

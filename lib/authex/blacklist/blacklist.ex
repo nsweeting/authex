@@ -29,10 +29,30 @@ defmodule Authex.Blacklist do
     end
   end
 
-  def get(jti) do
-    get(@blacklist, jti)
+  @doc """
+  Takes an Authex.Token struct or binary jti and checks whether it has been
+  blacklisted or not using the default blacklist. See get/2 for further details.
+
+  ## Parameters
+
+    - token_or_jti: An Authex.Token struct or binary jti.
+  """
+  def get(token_or_jti) do
+    get(@blacklist, token_or_jti)
   end
-  def get(module, %Token{jti: jti}) do
+
+  @doc """
+  Takes an Authex.Token struct or binary jti and checks whether it has been
+  blacklisted or not using the provided blacklist. Returns `false` if the jti
+  is not blacklisted. Returns `true` if it has been blacklisted. Otherwise,
+  returns `:error`.
+
+  ## Parameters
+
+    - blacklist:  A blacklist module.
+    - token_or_jti: An Authex.Token struct or binary jti.
+  """
+  def get(module, %Token{jti: jti} = _token_or_jti) do
     get(module, jti)
   end
   def get(module, jti) when is_atom(module) and is_binary(jti) do
@@ -45,10 +65,29 @@ defmodule Authex.Blacklist do
     :error
   end
 
-  def set(jti) do
-    get(@blacklist, jti)
+  @doc """
+  Takes an Authex.Token struct or binary jti and sets it as being blacklisted
+  using the default blacklist. See set/2 for further details.
+
+  ## Parameters
+
+    - token_or_jti: An Authex.Token struct or binary jti.
+  """
+  def set(token_or_jti) do
+    get(@blacklist, token_or_jti)
   end
-  def set(module, %Token{jti: jti}) do
+
+  @doc """
+  Takes an Authex.Token struct or binary jti and sets it as being blacklisted
+  using the default blacklist. Returns `:ok` if the action was successful.
+  Otherwise, `:error`.
+
+  ## Parameters
+
+    - blacklist:  A blacklist module.
+    - token_or_jti: An Authex.Token struct or binary jti.
+  """
+  def set(module, %Token{jti: jti} = _token_or_jti) do
     set(module, jti)
   end
   def set(module, jti) when is_atom(module) and is_binary(jti) do
@@ -61,10 +100,28 @@ defmodule Authex.Blacklist do
     :error
   end
 
-  def del(jti) do
-    del(@blacklist, jti)
+  @doc """
+  Takes an Authex.Token struct or binary jti and deletes it from the blacklist
+  using the default blacklist. See del/2 for further details.
+
+  ## Parameters
+
+    - token_or_jti: An Authex.Token struct or binary jti.
+  """
+  def del(token_or_jti) do
+    del(@blacklist, token_or_jti)
   end
-  def del(module, %Token{jti: jti}) do
+
+  @doc """
+  Takes an Authex.Token struct or binary jti and deletes it from the blacklist
+  using the default blacklist. Returns `:ok` if the action was successful.
+  Otherwise, `:error`.
+
+  ## Parameters
+
+    - token_or_jti: An Authex.Token struct or binary jti.
+  """
+  def del(module, %Token{jti: jti} = _token_or_jti) do
     del(module, jti)
   end
   def del(module, jti) when is_atom(module) and is_binary(jti) do

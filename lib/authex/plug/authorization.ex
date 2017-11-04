@@ -5,7 +5,8 @@ defmodule Authex.Plug.Authorization do
   alias Authex.Token
 
   @default_opts [
-    forbidden: Config.forbidden()
+    forbidden: Config.forbidden(),
+    permits: []
   ]
 
   @spec init(list) :: list

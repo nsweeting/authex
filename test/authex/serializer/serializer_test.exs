@@ -1,5 +1,6 @@
 defmodule Authex.SerializerTest do
   use ExUnit.Case
+  doctest Authex.Serializer
 
   test "for_token/1 uses the default serializer" do
     resource = %{id: 1, scopes: ["test/read"]}

@@ -1,5 +1,6 @@
 defmodule Authex.SignerTest do
   use ExUnit.Case
+  doctest Authex.Verifier
 
   alias Authex.Signer
 

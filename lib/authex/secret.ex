@@ -1,4 +1,17 @@
 defmodule Authex.Secret do
+  @doc """
+  Creates a new secret to sign tokens with.
+
+  ## Parameters
+
+    - length: the length of the secret.
+
+  ## Examples
+
+      iex> {:ok, secret} = Authex.Secret.new(100)
+      iex> String.length(secret)
+      100
+  """
   def new(length \\ 64)
   def new(length) when is_integer(length) and length > 31 do
     secret = length

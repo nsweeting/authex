@@ -41,7 +41,7 @@ defmodule Authex.Plug.Authentication do
   end
 
   defp put_token(conn, token) do
-    put_private(conn, :authex_token, token)
+    {:ok, put_private(conn, :authex_token, token)}
   end
 
   defp put_current_user(conn, token, options) do
