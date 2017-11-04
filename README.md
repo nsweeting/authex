@@ -200,12 +200,14 @@ defmodule MyApp.Web.UserController do
     end
   end
 
-  defp authenticate(conn, _opts) do
+  # These should be moved to an imported module.
+
+  def authenticate(conn, _opts) do
     opts = Authex.Plug.Authentication.init([unauthorized: MyApp.UnauthorizedPlug])
     Authex.Plug.Authentication.call(conn, opts)
   end
 
-  defp authorize(conn, opts) do
+  def authorize(conn, opts) do
     opts = Authex.Plug.Authorization.init([forbidden: MyApp.ForbiddenPlug])
     Authex.Plug.Authorization.call(conn, opts)
   end
