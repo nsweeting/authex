@@ -130,7 +130,7 @@ defmodule Authex.Blacklist do
     - token_or_jti: An Authex.Token struct or binary jti.
   """
   def set(token_or_jti) do
-    Config.blacklist() |> get(token_or_jti)
+    Config.blacklist() |> set(token_or_jti)
   end
 
   @doc """
