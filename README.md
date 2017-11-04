@@ -208,7 +208,7 @@ defmodule MyApp.Web.UserController do
   end
 
   def authorize(conn, opts) do
-    opts = Authex.Plug.Authorization.init([forbidden: MyApp.ForbiddenPlug])
+    opts = Authex.Plug.Authorization.init([forbidden: MyApp.ForbiddenPlug] ++ opts)
     Authex.Plug.Authorization.call(conn, opts)
   end
 end
