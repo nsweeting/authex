@@ -12,7 +12,7 @@ The package can be installed by adding `authex` to your list of dependencies in 
 ```elixir
 def deps do
   [
-    {:authex, "~> 0.1.1"}
+    {:authex, "~> 0.1.2"}
   ]
 end
 ```
@@ -211,3 +211,7 @@ defmodule MyApp.Web.UserController do
   end
 end
 ```
+
+## Blacklisting Tokens
+
+WIP
