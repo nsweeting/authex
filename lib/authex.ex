@@ -12,7 +12,9 @@ defmodule Authex do
   }
 
   @doc """
-  Creates a new Authex.Token struct from the given claims and options
+  Creates a new Authex.Token struct from the given claims and options.
+
+  Returns an `Authex.Token` struct.
 
   ## Parameters
 
@@ -37,6 +39,8 @@ defmodule Authex do
   @doc """
   Signs an Authex.Token struct, creating a compact token.
 
+  Returns a binary compact token.
+
   ## Parameters
 
     - token: An Authex.Token struct.
@@ -60,6 +64,10 @@ defmodule Authex do
 
   @doc """
   Verifies a compact token.
+
+  Returns `{:ok, %Authex.Token{}}` if the token is valid.
+
+  Otherwise, returns `{:error, :reason}`
 
   ## Parameters
 
@@ -86,6 +94,10 @@ defmodule Authex do
   @doc """
   Turns a token into a usable data structure using a serializer module.
 
+  Returns any term defined by the serializer.
+
+  Otherwise, returns `:error`. 
+
   ## Parameters
 
     - token: An Authex.Token struct or compact token binary.
@@ -108,6 +120,8 @@ defmodule Authex do
 
   @doc """
   Turns a usable data structure into a compact token using a serializer module.
+
+  Returns a binary compact token.
 
   ## Parameters
 
@@ -139,7 +153,9 @@ defmodule Authex do
   end
 
   @doc """
-  Returns the current user from a Plug.Conn.
+  Gets the current user from a Plug.Conn.
+
+  Returns a term defined by a serializer.
 
   ## Parameters
 
@@ -154,7 +170,9 @@ defmodule Authex do
   end
 
   @doc """
-  Returns the current scopes from a Plug.Conn.
+  Gets the current scopes from a Plug.Conn.
+
+  Returns a list of scopes.
 
   ## Parameters
 
