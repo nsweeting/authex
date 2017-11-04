@@ -24,17 +24,6 @@ defmodule Authex.Token do
     scopes:  [],
   ]
 
-  @default_opts [
-    ttl:     Config.default_ttl(),
-  ]
-
-  @default_claims [
-    iss:     Config.default_iss(),
-    aud:     Config.default_aud(),
-    jti:     Config.jti_mfa(),
-    scopes:  Config.default_scopes(),
-  ]
-
   @doc """
   Creates a new Authex.Token struct from the given claims and options
 
@@ -55,8 +44,9 @@ defmodule Authex.Token do
   """
   @spec new(list, list) :: t
   def new(claims \\ [], options \\ []) do
-    claims  = Keyword.merge(@default_claims, claims)
-    options = Keyword.merge(@default_opts, options)
+    claims  = Config.options(:claims, claims)
+    options = Config.options(:token, options)
+
     time    = Keyword.get(options, :time, :os.system_time(:seconds))
     ttl     = Keyword.get(options, :ttl)
     sub     = Keyword.get(claims, :sub)

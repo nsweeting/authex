@@ -17,12 +17,16 @@ defmodule Authex.Config do
     end
   end
 
-  @doc false
+  @doc """
+  Returns the blacklist module from the config.
+  """
   def blacklist do
     get(:blacklist, false)
   end
 
-  @doc false
+  @doc """
+  Returns the checker module from the config.
+  """
   def checker do
     get(:checker, Authex.Checker.Default)
   end
@@ -48,49 +52,6 @@ defmodule Authex.Config do
     get(:forbidden, Authex.Plug.Forbidden)
   end
 
-  @doc """
-  Returns the default alg used for signing and verifying tokens from the config.
-  """
-  def default_alg do
-    get(:default_alg, :hs256)
-  end
-
-  @doc """
-  Returns the default iss claim used in tokens from the config.
-  """
-  def default_iss do
-    get(:default_iss)
-  end
-
-  @doc """
-  Returns the default aud claim used in tokens from the config.
-  """
-  def default_aud do
-    get(:default_aud)
-  end
-
-  @doc """
-  Returns the default time to live for tokens from the config.
-  """
-  def default_ttl do
-    get(:default_ttl, 3600)
-  end
-
-  @doc """
-  Returns the default scopes for tokens from the config.
-  """
-  def default_scopes do
-    get(:default_scopes, [])
-  end
-
-  @doc """
-  Returns the {module, function, args} used to generate the jti claim in 
-  tokens from the config..
-  """
-  def jti_mfa do
-    get(:jti_mfa, {UUID, :uuid4, [:hex]})
-  end
-
   @doc false
   def get(key, default \\ nil) do
     Application.get_env(:authex, key, default)
@@ -99,5 +60,50 @@ defmodule Authex.Config do
   defp put_secret(secret) do
     Application.put_env(:authex, :secret, secret, persistent: true)
     secret
+  end
+
+  @doc false
+  def options(_, opts \\ [])
+  def options(:claims, opts) do
+    [
+      iss: get(:default_iss),
+      aud: get(:default_aud),
+      jti: get(:jti_mfa, {UUID, :uuid4, [:hex]}),
+      scopes: get(:default_scopes, []),
+    ] |> Keyword.merge(opts)
+  end
+  def options(:token, opts) do
+    [
+      ttl: get(:default_ttl, 3600),
+    ] |> Keyword.merge(opts)
+  end
+  def options(:signer, opts) do
+    [
+      secret: secret(),
+      alg:    default_alg()
+    ] |> Keyword.merge(opts)
+  end
+  def options(:verification, opts) do
+    [
+      alg:       default_alg(),
+      secret:    secret(),
+      blacklist: blacklist()
+    ] |> Keyword.merge(opts)
+  end
+  def options(:authentication, opts) do
+    [
+      unauthorized: unauthorized(),
+      serializer:   serializer(),
+    ] |> Keyword.merge(opts)
+  end
+  def options(:authorization, opts) do
+    [
+      forbidden: forbidden(),
+      permits: []
+    ] |> Keyword.merge(opts)
+  end
+
+  defp default_alg do
+    get(:default_alg, :hs256)
   end
 end

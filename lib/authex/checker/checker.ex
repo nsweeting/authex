@@ -5,8 +5,6 @@ defmodule Authex.Checker do
 
   @callback handle_run(Authex.Verification.t) :: term | :error
 
-  @checker Config.checker()
-
   defmacro __using__(_) do
     quote location: :keep do
       @behaviour Checker 
@@ -38,7 +36,7 @@ defmodule Authex.Checker do
   """
   @spec run(Authex.Verification.t) :: {:ok, Authex.Token.t} | {:error, atom}
   def run(verification) do
-    run(@checker, verification)
+    Config.checker() |> run(verification)
   end
 
   @doc """

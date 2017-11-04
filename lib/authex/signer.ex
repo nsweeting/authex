@@ -13,12 +13,6 @@ defmodule Authex.Signer do
     :jws,
   ]
 
-  @default_opts [
-    secret: Config.secret(),
-    alg:    Config.default_alg()
-  ]
-
-
   @doc """
   Creates a new Authex.Signer struct from the options.
 
@@ -32,7 +26,8 @@ defmodule Authex.Signer do
   """
   @spec new(list) :: t
   def new(options \\ []) do
-    options = Keyword.merge(@default_opts, options)
+    options = Config.options(:signer, options)
+
     secret  = Keyword.get(options, :secret)
     alg     = Keyword.get(options, :alg)
   

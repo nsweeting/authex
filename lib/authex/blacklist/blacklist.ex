@@ -48,8 +48,6 @@ defmodule Authex.Blacklist do
   @type token_or_jti :: Authex.Token.t | binary
   @type jti :: binary 
 
-  @blacklist Config.blacklist()
-
   defmacro __using__(_) do
     quote location: :keep do
       @behaviour Blacklist
@@ -87,7 +85,7 @@ defmodule Authex.Blacklist do
   """
   @spec get(token_or_jti) :: :ok | :error
   def get(token_or_jti) do
-    get(@blacklist, token_or_jti)
+    Config.blacklist() |> get(token_or_jti)
   end
 
   @doc """
@@ -132,7 +130,7 @@ defmodule Authex.Blacklist do
     - token_or_jti: An Authex.Token struct or binary jti.
   """
   def set(token_or_jti) do
-    get(@blacklist, token_or_jti)
+    Config.blacklist() |> get(token_or_jti)
   end
 
   @doc """
@@ -176,7 +174,7 @@ defmodule Authex.Blacklist do
   """
   @spec del(token_or_jti) :: :ok | :error
   def del(token_or_jti) do
-    del(@blacklist, token_or_jti)
+    Config.blacklist() |> del(token_or_jti)
   end
 
   @doc """

@@ -8,8 +8,6 @@ defmodule Authex.Serializer do
 
   @type serializer :: atom 
 
-  @serializer Config.serializer()
-
   defmacro __using__(_) do
     quote location: :keep do
       @behaviour Serializer 
@@ -40,7 +38,7 @@ defmodule Authex.Serializer do
   """
   @spec from_token(Authex.Token.t) :: term
   def from_token(%Token{} = token) do
-    from_token(@serializer, token)
+    Config.serializer() |> from_token(token)
   end
 
   @doc """
@@ -77,7 +75,7 @@ defmodule Authex.Serializer do
   """
   @spec for_token(term) :: Authex.Token.t
   def for_token(resource) do
-    for_token(@serializer, resource)
+    Config.serializer() |> for_token(resource)
   end
 
   @doc """
@@ -113,7 +111,7 @@ defmodule Authex.Serializer do
   """
   @spec for_compact_token(term) :: binary
   def for_compact_token(resource) do
-    for_compact_token(@serializer, resource)
+    Config.serializer() |> for_compact_token(resource)
   end
 
 

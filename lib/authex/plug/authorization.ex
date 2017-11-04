@@ -4,14 +4,9 @@ defmodule Authex.Plug.Authorization do
   alias Authex.Config
   alias Authex.Token
 
-  @default_opts [
-    forbidden: Config.forbidden(),
-    permits: []
-  ]
-
   @spec init(list) :: list
   def init(options \\ []) do
-    Keyword.merge(@default_opts, options)
+    Config.options(:authorization, options)
   end
 
   @spec call(Plug.Conn.t, list) :: Plug.Conn.t

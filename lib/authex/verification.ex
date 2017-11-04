@@ -18,12 +18,6 @@ defmodule Authex.Verification do
     :compact
   ]
 
-  @default_opts [
-    alg:       Config.default_alg(),
-    secret:    Config.secret(),
-    blacklist: Config.blacklist()
-  ]
-
   @doc """
   Creates a new Authex.Verification struct from the compact token and options.
 
@@ -46,7 +40,8 @@ defmodule Authex.Verification do
   """
   @spec new(binary, list) :: Authex.Verification.t
   def new(compact, options \\ []) do
-    options   = Keyword.merge(@default_opts, options)
+    options   = Config.options(:verification, options)
+
     time      = Keyword.get(options, :time, :os.system_time(:seconds))
     secret    = Keyword.get(options, :secret)
     alg       = Keyword.get(options, :alg)
