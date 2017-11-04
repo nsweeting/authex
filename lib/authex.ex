@@ -1,4 +1,8 @@
 defmodule Authex do
+  @moduledoc """
+  To come...
+  """
+
   alias Authex.{
     Blacklist,
     Serializer,
@@ -25,6 +29,7 @@ defmodule Authex do
       iex> with %Authex.Token{sub: sub} <- token, do: sub
       1
   """
+  @spec token(list, list) :: Authex.Token.t
   def token(claims \\ [], options \\ []) do
     Token.new(claims, options)
   end
@@ -46,6 +51,7 @@ defmodule Authex do
       iex> Authex.token() |> Authex.sign() |> is_binary()
       true
   """
+  @spec sign(Authex.Token.t, list) :: binary
   def sign(%Token{} = token, options \\ []) do
     signer = Signer.new(options)
     claims = Token.get_claims(token)
@@ -70,6 +76,7 @@ defmodule Authex do
       iex> with %Authex.Token{sub: sub} <- token, do: sub
       1
   """
+  @spec verify(binary, list) :: {:ok, Authex.Token.t} | {:error, atom}
   def verify(compact_token, options \\ []) do  
     compact_token
     |> Verifier.new(options)
@@ -88,6 +95,7 @@ defmodule Authex do
       iex> [sub: 1] |> Authex.token() |> Authex.sign() |> Authex.from_token()
       %{id: 1, scopes: []}
   """
+  @spec from_token(Authex.Token.t) :: term | {:error, atom}
   def from_token(%Token{} = token) do
     Serializer.from_token(token)
   end
@@ -110,6 +118,7 @@ defmodule Authex do
       iex> %{id: 1} |> Authex.for_token() |> is_binary()
       true
   """
+  @spec for_token(term) :: Authex.Token.t | :error
   def for_token(resource) do
     Serializer.for_compact_token(resource)
   end
@@ -136,6 +145,7 @@ defmodule Authex do
 
     - conn: A Plug.Conn struct.
   """
+  @spec current_user(Plug.Conn.t) :: {:ok, term} | :error
   def current_user(%{private: private} = _conn) do
     Map.fetch(private, :authex_current_user)
   end
@@ -150,6 +160,7 @@ defmodule Authex do
 
     - conn: A Plug.Conn struct.
   """
+  @spec current_scopes(Plug.Conn.t) :: {:ok, list} | :error
   def current_scopes(%{private: private} = _conn) do
     case Map.fetch(private, :authex_token) do
       {:ok, token} -> Map.fetch(token, :scopes)

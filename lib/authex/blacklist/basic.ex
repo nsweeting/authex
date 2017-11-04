@@ -1,6 +1,6 @@
 defmodule Authex.Blacklist.Basic do
-  use Agent
   use Authex.Blacklist
+  use Agent
 
   def start_link do
     Agent.start_link(fn -> MapSet.new() end, name: __MODULE__)

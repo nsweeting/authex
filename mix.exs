@@ -12,6 +12,7 @@ defmodule Authex.Mixfile do
       deps: deps(),
       description: description(),
       package: package(),
+      docs: docs()
     ]
   end
 
@@ -34,6 +35,12 @@ defmodule Authex.Mixfile do
       maintainers: ["Nicholas Sweeting"],
       licenses: ["MIT"],
       links:  %{"GitHub" => "https://github.com/nsweeting/authex"}
+    ]
+  end
+
+  defp docs do
+    [
+      source_url: "https://github.com/nsweeting/authex"
     ]
   end
 

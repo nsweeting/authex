@@ -3,12 +3,14 @@ defmodule Authex.Serializer do
   alias Authex.Serializer
   alias Authex.Token
 
-  @callback handle_from_token(Token.t) :: term | :error
-  @callback handle_for_token(term) :: Token.t | :error
+  @callback handle_from_token(Authex.Token.t) :: term | :error
+  @callback handle_for_token(term) :: Authex.Token.t | :error
+
+  @type serializer :: atom 
 
   @serializer Config.serializer()
 
- defmacro __using__(_) do
+  defmacro __using__(_) do
     quote location: :keep do
       @behaviour Serializer 
 
@@ -36,6 +38,7 @@ defmodule Authex.Serializer do
       iex> [sub: 1, scopes: []] |> Authex.token() |> Authex.Serializer.from_token()
       %{id: 1, scopes: []}
   """
+  @spec from_token(Authex.Token.t) :: term
   def from_token(%Token{} = token) do
     from_token(@serializer, token)
   end
@@ -54,6 +57,7 @@ defmodule Authex.Serializer do
       iex> Authex.Serializer.from_token(Authex.Serializer.Basic, token)
       %{id: 1, scopes: []}
   """
+  @spec from_token(serializer, Authex.Token.t) :: term
   def from_token(serializer, %Token{} = token) do
     apply(serializer, :handle_from_token, [token])
   end
@@ -71,6 +75,7 @@ defmodule Authex.Serializer do
       iex> with %Authex.Token{sub: sub, scopes: scopes} <- token, do: [sub, scopes]
       [1, ["test/read"]]
   """
+  @spec for_token(term) :: Authex.Token.t
   def for_token(resource) do
     for_token(@serializer, resource)
   end
@@ -89,6 +94,7 @@ defmodule Authex.Serializer do
       iex> with %Authex.Token{sub: sub, scopes: scopes} <- token, do: [sub, scopes]
       [1, ["test/read"]]
   """
+  @spec for_token(serializer, term) :: Authex.Token.t
   def for_token(serializer, resource) do
     apply(serializer, :handle_for_token, [resource])
   end
@@ -105,6 +111,7 @@ defmodule Authex.Serializer do
       iex> %{id: 1} |> Authex.Serializer.for_compact_token() |> is_binary()
       true
   """
+  @spec for_compact_token(term) :: binary
   def for_compact_token(resource) do
     for_compact_token(@serializer, resource)
   end
@@ -123,6 +130,7 @@ defmodule Authex.Serializer do
       iex> is_binary(compact)
       true
   """
+  @spec for_compact_token(serializer, term) :: binary
   def for_compact_token(serializer, resource) do
     case for_token(serializer, resource) do
       :error -> :error

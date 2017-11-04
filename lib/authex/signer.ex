@@ -2,6 +2,7 @@ defmodule Authex.Signer do
   alias Authex.Config
   alias Authex.Signer
 
+  @type claims :: %{binary => binary}
   @type t :: %__MODULE__{
     jwk:         integer,
     jws:         integer
@@ -29,6 +30,7 @@ defmodule Authex.Signer do
     * `:secret` - the secret to sign the token with.
     * `:alg` - the algorithm to sign the token with.
   """
+  @spec new(list) :: t
   def new(options \\ []) do
     options = Keyword.merge(@default_opts, options)
     secret  = Keyword.get(options, :secret)
@@ -56,6 +58,7 @@ defmodule Authex.Signer do
       iex> signer |> Authex.Signer.compact(claims) |> is_binary() 
       true
   """
+  @spec compact(t, claims) :: binary
   def compact(%Signer{jwk: jwk, jws: jws}, claims) do
     {_, compact_token} = jwk
     |> JOSE.JWT.sign(jws, claims)

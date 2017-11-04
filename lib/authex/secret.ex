@@ -12,6 +12,7 @@ defmodule Authex.Secret do
       iex> String.length(secret)
       100
   """
+  @spec new(integer) :: binary | :error
   def new(length \\ 64)
   def new(length) when is_integer(length) and length > 31 do
     secret = length

@@ -7,6 +7,8 @@ defmodule Authex.Blacklist do
   @callback handle_set(binary) :: :ok | :error
   @callback handle_del(binary) :: :ok | :error
 
+  @type blacklist :: atom 
+
   @blacklist Config.blacklist()
 
   defmacro __using__(_) do
@@ -37,6 +39,7 @@ defmodule Authex.Blacklist do
 
     - token_or_jti: An Authex.Token struct or binary jti.
   """
+  @spec get(Authex.Token.t | binary) :: :ok | :error
   def get(token_or_jti) do
     get(@blacklist, token_or_jti)
   end
@@ -52,6 +55,7 @@ defmodule Authex.Blacklist do
     - blacklist:  A blacklist module.
     - token_or_jti: An Authex.Token struct or binary jti.
   """
+  @spec get(blacklist, Authex.Token.t | binary) :: boolean | :error
   def get(module, %Token{jti: jti} = _token_or_jti) do
     get(module, jti)
   end
@@ -87,6 +91,7 @@ defmodule Authex.Blacklist do
     - blacklist:  A blacklist module.
     - token_or_jti: An Authex.Token struct or binary jti.
   """
+  @spec set(blacklist, Authex.Token.t | binary) :: :ok | :error
   def set(module, %Token{jti: jti} = _token_or_jti) do
     set(module, jti)
   end
@@ -108,6 +113,7 @@ defmodule Authex.Blacklist do
 
     - token_or_jti: An Authex.Token struct or binary jti.
   """
+  @spec del(Authex.Token.t | binary) :: :ok | :error
   def del(token_or_jti) do
     del(@blacklist, token_or_jti)
   end
@@ -121,6 +127,7 @@ defmodule Authex.Blacklist do
 
     - token_or_jti: An Authex.Token struct or binary jti.
   """
+  @spec set(blacklist, Authex.Token.t | binary) :: :ok | :error
   def del(module, %Token{jti: jti} = _token_or_jti) do
     del(module, jti)
   end

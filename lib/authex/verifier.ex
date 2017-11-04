@@ -46,6 +46,7 @@ defmodule Authex.Verifier do
       iex> with %Authex.Verifier{compact: compact} <- verifier, do: compact
       "token"
   """
+  @spec new(binary, list) :: Authex.Verifier.t
   def new(compact, options \\ []) do
     options   = Keyword.merge(@default_opts, options)
     time      = Keyword.get(options, :time, :os.system_time(:seconds))
@@ -78,6 +79,7 @@ defmodule Authex.Verifier do
       iex> with %Authex.Token{sub: sub} <- token, do: sub
       1
   """
+  @spec run(t) :: {:ok, Authex.Token.t} | {:error, atom}
   def run(%Verifier{jwk: jwk, alg: alg, time: time, blacklist: blacklist, compact: compact}) do
     with {:ok, claims} <- check_token(jwk, alg, compact),
          token <- Token.from_map(claims),
