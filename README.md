@@ -74,7 +74,7 @@ The above would create an `Authex.Token` struct for a user with an id of 1, and 
 Once we have a `Authex.Token` struct, we can sign it to create a compact token binary. This is what we will use for authentication and authorization for our API.
 
 ```elixir
-[sub: 1, scopes: ["admin/read"]
+[sub: 1, scopes: ["admin/read"]]
 |> Authex.token()
 |> Authex.sign()
 ```

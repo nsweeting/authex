@@ -1,6 +1,6 @@
-defmodule Authex.VerifierTest do
+defmodule Authex.VerificationTest do
   use ExUnit.Case
-  doctest Authex.Verifier
+  doctest Authex.Verification
 
   #alias Authex.Token
   #alias Authex.Verifier

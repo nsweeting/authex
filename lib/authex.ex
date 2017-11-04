@@ -5,10 +5,11 @@ defmodule Authex do
 
   alias Authex.{
     Blacklist,
+    Checker,
     Serializer,
     Signer,
     Token,
-    Verifier,
+    Verification,
   }
 
   @doc """
@@ -87,8 +88,8 @@ defmodule Authex do
   @spec verify(binary, list) :: {:ok, Authex.Token.t} | {:error, atom}
   def verify(compact_token, options \\ []) do  
     compact_token
-    |> Verifier.new(options)
-    |> Verifier.run()
+    |> Verification.new(options)
+    |> Checker.run()
   end
 
   @doc """

@@ -22,6 +22,11 @@ defmodule Authex.Config do
     get(:blacklist, false)
   end
 
+  @doc false
+  def checker do
+    get(:checker, Authex.Checker.Default)
+  end
+
   @doc """
   Returns the serializer module from the config.
   """
