@@ -64,7 +64,7 @@ At the heart of token creation is the `Authex.Token` struct. This struct is simp
 We can easily create `Authex.Token` structs using the `Authex.token/2` function.
 
 ```elixir
-Authex.token([sub: 1, scopes: ["admin/read"])
+Authex.token(sub: 1, scopes: ["admin/read"])
 ```
 
 The above would create an `Authex.Token` struct for a user with an id of 1, and with "admin/read" authorization.
@@ -174,12 +174,12 @@ For example, with our controller below, we are permitting "user" and "admin" acc
 
 Requests are bucketed under the following types:
 
-  * "GET" - "read"
-  * "HEAD" - "read"
-  * "PUT" - "write"
-  * "PATCH" - "write"
-  * "POST" - "write"
-  * "DELETE" - "delete"
+  * GET - read
+  * HEAD - read
+  * PUT - write
+  * PATCH - write
+  * POST - write
+  * DELETE - delete
 
 So, in order to access the show action, our token would require one of the following scopes: `["user/read", "admin/read"]`. Or, the token would require `["user/write", "admin/write"]` to access the update action.
 
