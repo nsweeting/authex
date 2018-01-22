@@ -33,7 +33,7 @@ defmodule Authex.Verification do
     * `:secret` - the secret to verify the token with.
     * `:alg` - the algorithm to verify the token with.
     * `:blacklist` - the blacklist module to check the jti claim with.
-    * `:banlist` - the balist module to check the sub claim with.
+    * `:banlist` - the banlist module to check the sub claim with.
 
   ## Examples
 
