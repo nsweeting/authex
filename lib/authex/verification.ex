@@ -6,7 +6,8 @@ defmodule Authex.Verification do
     time:         integer,
     jwk:          integer,
     alg:          integer,
-    blacklist:    binary,
+    blacklist:    atom,
+    banlist:      atom,
     compact:      binary
   }
 
@@ -15,6 +16,7 @@ defmodule Authex.Verification do
     :jwk,
     :alg,
     :blacklist,
+    :banlist,
     :compact
   ]
 
@@ -31,6 +33,7 @@ defmodule Authex.Verification do
     * `:secret` - the secret to verify the token with.
     * `:alg` - the algorithm to verify the token with.
     * `:blacklist` - the blacklist module to check the jti claim with.
+    * `:banlist` - the banlist module to check the sub claim with.
 
   ## Examples
 
@@ -46,6 +49,7 @@ defmodule Authex.Verification do
     secret    = Keyword.get(options, :secret)
     alg       = Keyword.get(options, :alg)
     blacklist = Keyword.get(options, :blacklist)
+    banlist   = Keyword.get(options, :banlist)
 
     %Verification{}
     |> put_time(time)
@@ -53,6 +57,7 @@ defmodule Authex.Verification do
     |> put_jwk(secret)
     |> put_alg(alg)
     |> put_blacklist(blacklist)
+    |> put_banlist(banlist)
   end
 
   @doc false
@@ -88,5 +93,10 @@ defmodule Authex.Verification do
   @doc false
   def put_blacklist(verifier, blacklist) do
     %{verifier | blacklist: blacklist}
+  end
+
+  @doc false
+  def put_banlist(verifier, banlist) do
+    %{verifier | banlist: banlist}
   end
 end

@@ -25,6 +25,13 @@ defmodule Authex.Config do
   end
 
   @doc """
+  Returns the banlist module from the config.
+  """
+  def banlist do
+    get(:banlist, false)
+  end
+
+  @doc """
   Returns the checker module from the config.
   """
   def checker do
@@ -87,7 +94,8 @@ defmodule Authex.Config do
     [
       alg:       default_alg(),
       secret:    secret(),
-      blacklist: blacklist()
+      blacklist: blacklist(),
+      banlist:   banlist()
     ] |> Keyword.merge(opts)
   end
   def options(:authentication, opts) do
