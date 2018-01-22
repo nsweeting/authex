@@ -4,7 +4,7 @@ defmodule Authex.Banlist do
   alias Authex.Token
 
   @doc """
-  Checks whether the banlist contains the provided binary sub.
+  Checks whether the banlist contains the provided binary or integer sub.
 
   Returning `true` signals that the sub is banned.
 
@@ -14,7 +14,7 @@ defmodule Authex.Banlist do
 
   ## Parameters
 
-    - sub: A binary sub.
+    - sub: A binary or integer sub.
   """
   @callback handle_get(sub) :: boolean | :error
 
@@ -27,12 +27,12 @@ defmodule Authex.Banlist do
 
   ## Parameters
 
-    - sub: A binary sub.
+    - sub: A binary or integer sub.
   """
   @callback handle_set(sub) :: :ok | :error
 
   @doc """
-  Removes the provided binary sub from the banlist.
+  Removes the provided binary or integer sub from the banlist.
 
   Returning `:ok` signals the operation was successful.
 
@@ -40,13 +40,13 @@ defmodule Authex.Banlist do
 
   ## Parameters
 
-    - sub: A binary sub.
+    - sub: A binary or integer sub.
   """
   @callback handle_del(sub) :: :ok | :error
 
   @type banlist :: atom 
-  @type token_or_sub :: Authex.Token.t | binary
-  @type sub :: binary 
+  @type token_or_sub :: Authex.Token.t | binary | integer
+  @type sub :: binary | integer
 
   defmacro __using__(_) do
     quote location: :keep do
@@ -72,7 +72,7 @@ defmodule Authex.Banlist do
   end
 
   @doc """
-  Takes an Authex.Token struct or binary sub and checks if its banned
+  Takes an Authex.Token struct or binary or integer sub and checks if its banned
   using the default banlist.
 
   The default banlist is set through the `:banlist` config option.
@@ -81,7 +81,7 @@ defmodule Authex.Banlist do
 
   ## Parameters
 
-    - token_or_sub: An Authex.Token struct or binary sub.
+    - token_or_sub: An Authex.Token struct or binary or integer sub.
   """
   @spec get(token_or_sub) :: :ok | :error
   def get(token_or_sub) do
@@ -89,7 +89,7 @@ defmodule Authex.Banlist do
   end
 
   @doc """
-  Takes an Authex.Token struct or binary sub and checks whether it has been
+  Takes an Authex.Token struct or binary or integer sub and checks whether it has been
   banned using the provided module.
   
   Returns `false` if the sub is not banned.
@@ -101,14 +101,14 @@ defmodule Authex.Banlist do
   ## Parameters
 
     - banlist:  A banlist module.
-    - token_or_sub: An Authex.Token struct or binary sub.
+    - token_or_sub: An Authex.Token struct or binary or integer sub.
   """
   @spec get(banlist, token_or_sub) :: boolean | :error
   def get(module, %Token{sub: sub}) do
     get(module, sub)
   end
 
-  def get(module, sub) when is_atom(module) and is_binary(sub) do
+  def get(module, sub) when is_atom(module) do
     case module do
       false     -> :error
       module -> apply(module, :handle_get, [sub])
@@ -120,7 +120,7 @@ defmodule Authex.Banlist do
   end
 
   @doc """
-  Takes an Authex.Token struct or binary sub and sets it as being banlisted
+  Takes an Authex.Token struct or binary or integer sub and sets it as being banlisted
   using the default banlist.
 
   The default banlist is set through the `:banlist` config option.
@@ -129,14 +129,15 @@ defmodule Authex.Banlist do
 
   ## Parameters
 
-    - token_or_sub: An Authex.Token struct or binary sub.
+    - token_or_sub: An Authex.Token struct or binary or integer sub.
   """
+  @spec set(token_or_sub) :: :ok | :error
   def set(token_or_sub) do
     Config.banlist() |> set(token_or_sub)
   end
 
   @doc """
-  Takes an Authex.Token struct or binary sub and sets it as being banlisted
+  Takes an Authex.Token struct or binary or integer sub and sets it as being banlisted
   using the provided module.
   
   Returns `:ok` if the operation was successful.
@@ -146,14 +147,14 @@ defmodule Authex.Banlist do
   ## Parameters
 
     - banlist:  A banlist module.
-    - token_or_sub: An Authex.Token struct or binary sub.
+    - token_or_sub: An Authex.Token struct or binary or integer sub.
   """
   @spec set(banlist, token_or_sub) :: :ok | :error
   def set(module, %Token{sub: sub}) do
     set(module, sub)
   end
 
-  def set(module, sub) when is_atom(module) and is_binary(sub) do
+  def set(module, sub) when is_atom(module) do
     case module do
       false     -> :error
       module -> apply(module, :handle_set, [sub])
@@ -165,7 +166,7 @@ defmodule Authex.Banlist do
   end
 
   @doc """
-  Takes an Authex.Token struct or binary sub and deletes it from the banlist
+  Takes an Authex.Token struct or binary or integer sub and deletes it from the banlist
   using the default banlist.
 
   The default banlist is set through the `:banlist` config option.
@@ -174,7 +175,7 @@ defmodule Authex.Banlist do
 
   ## Parameters
 
-    - token_or_sub: An Authex.Token struct or binary sub.
+    - token_or_sub: An Authex.Token struct or binary or integer sub.
   """
   @spec del(token_or_sub) :: :ok | :error
   def del(token_or_sub) do
@@ -182,7 +183,7 @@ defmodule Authex.Banlist do
   end
 
   @doc """
-  Takes an Authex.Token struct or binary sub and deletes it from the banlist
+  Takes an Authex.Token struct or binary or integer sub and deletes it from the banlist
   using the provided module.
   
   Returns `:ok` if the operation was successful.
@@ -191,14 +192,14 @@ defmodule Authex.Banlist do
 
   ## Parameters
 
-    - token_or_sub: An Authex.Token struct or binary sub.
+    - token_or_sub: An Authex.Token struct or binary or integer sub.
   """
-  @spec set(banlist, token_or_sub) :: :ok | :error
+  @spec del(banlist, token_or_sub) :: :ok | :error
   def del(module, %Token{sub: sub}) do
     del(module, sub)
   end
 
-  def del(module, sub) when is_atom(module) and is_binary(sub) do
+  def del(module, sub) when is_atom(module) do
     case module do
       false     -> :error
       module -> apply(module, :handle_del, [sub])
