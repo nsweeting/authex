@@ -65,7 +65,7 @@ defmodule Authex.Checker.Default do
     :ok
   end
 
-  defp check_banlist(banlist, sub) when is_atom(banlist) and is_binary(sub) do
+  defp check_banlist(banlist, sub) when is_atom(banlist) do
     case Banlist.get(banlist, sub) do
       false  -> :ok
       true   -> {:error, :banned}
