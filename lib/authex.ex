@@ -4,6 +4,7 @@ defmodule Authex do
   """
 
   alias Authex.{
+    Banlist,
     Blacklist,
     Checker,
     Serializer,
@@ -146,6 +147,16 @@ defmodule Authex do
   @doc false
   def blacklist(token_or_jti) do
     Blacklist.set(token_or_jti)
+  end
+
+  @doc false
+  def banned?(token_or_sub) do
+    Banlist.get(token_or_sub)
+  end
+
+  @doc false
+  def ban(token_or_sub) do
+    Banlist.set(token_or_sub)
   end
 
   @doc false
