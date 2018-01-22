@@ -150,6 +150,11 @@ defmodule Authex do
   end
 
   @doc false
+  def unblacklist(token_or_jti) do
+    Blacklist.del(token_or_jti)
+  end
+
+  @doc false
   def banned?(token_or_sub) do
     Banlist.get(token_or_sub)
   end
@@ -160,8 +165,8 @@ defmodule Authex do
   end
 
   @doc false
-  def unblacklist(token_or_jti) do
-    Blacklist.del(token_or_jti)
+  def unban(token_or_sub) do
+    Banlist.del(token_or_sub)
   end
 
   @doc """
