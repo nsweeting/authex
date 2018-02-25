@@ -248,7 +248,7 @@ defmodule Authex do
       end
 
       def for_token(resource) do
-        serializer = config(:serializer) || raise Authex.Error, "no serializer configured"
+        serializer = config(:serializer)
         Serializer.for_token(serializer, resource)
       end
 
