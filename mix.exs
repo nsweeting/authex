@@ -1,13 +1,14 @@
 defmodule Authex.Mixfile do
   use Mix.Project
 
-  @version "0.1.6"
+  @version "0.2.0"
 
   def project do
     [
       app: :authex,
       version: @version,
       elixir: "~> 1.5",
+      elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env == :prod,
       deps: deps(),
       description: description(),
@@ -22,6 +23,10 @@ defmodule Authex.Mixfile do
       extra_applications: [:logger]
     ]
   end
+
+  # Specifies which paths to compile per environment.
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_), do: ["lib"]
 
   defp description do
     """
@@ -40,6 +45,8 @@ defmodule Authex.Mixfile do
 
   defp docs do
     [
+      extras: ["README.md"],
+      main: "readme",
       source_url: "https://github.com/nsweeting/authex"
     ]
   end

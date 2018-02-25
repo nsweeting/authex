@@ -1,20 +1,17 @@
 defmodule Authex do
-  @moduledoc """
-  To come...
-  """
+  alias Authex.Banlist
+  alias Authex.Blacklist
+  alias Authex.Signer
+  alias Authex.Serializer
+  alias Authex.Token
+  alias Authex.Verifier
 
-  alias Authex.{
-    Banlist,
-    Blacklist,
-    Checker,
-    Serializer,
-    Signer,
-    Token,
-    Verification,
-  }
+  @type token_or_sub :: Authex.Token.t() | binary | integer
+
+  @type token_or_jti :: Authex.Token.t() | binary
 
   @doc """
-  Creates a new Authex.Token struct from the given claims and options.
+  Creates a new token from the given claims and options.
 
   Returns an `Authex.Token` struct.
 
@@ -26,43 +23,26 @@ defmodule Authex do
   ## Options
     * `:time` - the base time (timestamp format) in which to use.
     * `:ttl` - the TTL for the token.
-
-  ## Examples
-
-      iex> token = Authex.token([sub: 1], [ttl: 60])
-      iex> with %Authex.Token{sub: sub} <- token, do: sub
-      1
   """
-  @spec token(list, list) :: Authex.Token.t
-  def token(claims \\ [], options \\ []) do
-    Token.new(claims, options)
-  end
+  @callback token(claims :: Authex.Token.claims(), options :: Authex.Token.options()) ::
+              token :: Authex.Token.t()
 
   @doc """
-  Signs an Authex.Token struct, creating a compact token.
+  Signs an `Authex.Token` struct, creating a compact token.
 
   Returns a binary compact token.
 
   ## Parameters
 
-    - token: An Authex.Token struct.
+    - token: An `Authex.Token` struct.
     - options: A keyword list of options.
 
   ## Options
     * `:secret` - the secret key to sign the token with.
     * `:alg` - the algorithm to sign the token with.
-
-  ## Examples
-
-      iex> Authex.token() |> Authex.sign() |> is_binary()
-      true
   """
-  @spec sign(Authex.Token.t, list) :: binary
-  def sign(%Token{} = token, options \\ []) do
-    signer = Signer.new(options)
-    claims = Token.get_claims(token)
-    Signer.compact(signer, claims)
-  end
+  @callback sign(token :: Authex.Token.t(), options :: Authex.Signer.options()) ::
+              compact_token :: Authex.Token.compact()
 
   @doc """
   Verifies a compact token.
@@ -77,24 +57,19 @@ defmodule Authex do
     - options: A keyword list of options.
 
   ## Options
+    * `:time` - the base time (timestamp format) in which to use.
     * `:secret` - the secret key to verify the token with.
     * `:alg` - the algorithm to verify the token with.
-
-  ## Examples
-
-      iex> {:ok, token} = [sub: 1] |> Authex.token() |> Authex.sign() |> Authex.verify()
-      iex> with %Authex.Token{sub: sub} <- token, do: sub
-      1
+    * `:banlist` - the banlist module to verify with.
+    * `:blacklist` - the blacklist module to verify with.
   """
-  @spec verify(binary, list) :: {:ok, Authex.Token.t} | {:error, atom}
-  def verify(compact_token, options \\ []) do  
-    compact_token
-    |> Verification.new(options)
-    |> Checker.run()
-  end
+  @callback verify(
+              compact_token :: Authex.Token.compact(),
+              options :: Authex.Verification.options()
+            ) :: {:ok, token :: Authex.Token.t()} | {:error, atom}
 
   @doc """
-  Turns a token into a usable data structure using a serializer module.
+  Turns an `Authex.Token` into a usable data structure using a serializer module.
 
   Returns any term defined by the serializer.
 
@@ -102,23 +77,33 @@ defmodule Authex do
 
   ## Parameters
 
-    - token: An Authex.Token struct or compact token binary.
-
-  ## Examples
-
-      iex> [sub: 1] |> Authex.token() |> Authex.sign() |> Authex.from_token()
-      %{id: 1, scopes: []}
+    - token: An `Authex.Token` struct.
   """
-  @spec from_token(Authex.Token.t) :: term | {:error, atom}
-  def from_token(%Token{} = token) do
-    Serializer.from_token(token)
-  end
-  def from_token(compact_token) when is_binary(compact_token) do
-    case verify(compact_token) do
-      {:ok, token} -> from_token(token)
-      error -> error
-    end
-  end
+  @callback from_token(token :: Authex.Token.t()) :: any | {:error, atom}
+
+  @doc """
+  Turns a compact token into a usable data structure using a serializer module.
+
+  Returns any term defined by the serializer.
+
+  Otherwise, returns `:error`. 
+
+  ## Parameters
+
+    - compact_token: A binary compact token.
+  """
+  @callback from_compact_token(compact_token :: Authex.Token.compact(), options :: Authex.Signer.options()) :: any | {:error, atom}
+
+  @doc """
+  Turns a usable data structure into an `Authex.Token` using a serializer module.
+
+  Returns a `Authex.Token` struct.
+
+  ## Parameters
+
+    - resource: Any usable data structure.
+  """
+  @callback for_token(any) :: Authex.Token.t() | :error
 
   @doc """
   Turns a usable data structure into a compact token using a serializer module.
@@ -128,46 +113,8 @@ defmodule Authex do
   ## Parameters
 
     - resource: Any usable data structure.
-
-  ## Examples
-
-      iex> %{id: 1} |> Authex.for_token() |> is_binary()
-      true
   """
-  @spec for_token(term) :: Authex.Token.t | :error
-  def for_token(resource) do
-    Serializer.for_compact_token(resource)
-  end
-
-  @doc false
-  def blacklisted?(token_or_jti) do
-    Blacklist.get(token_or_jti)
-  end
-
-  @doc false
-  def blacklist(token_or_jti) do
-    Blacklist.set(token_or_jti)
-  end
-
-  @doc false
-  def unblacklist(token_or_jti) do
-    Blacklist.del(token_or_jti)
-  end
-
-  @doc false
-  def banned?(token_or_sub) do
-    Banlist.get(token_or_sub)
-  end
-
-  @doc false
-  def ban(token_or_sub) do
-    Banlist.set(token_or_sub)
-  end
-
-  @doc false
-  def unban(token_or_sub) do
-    Banlist.del(token_or_sub)
-  end
+  @callback for_compact_token(any) :: Authex.Token.compact() | :error
 
   @doc """
   Gets the current user from a Plug.Conn.
@@ -178,13 +125,7 @@ defmodule Authex do
 
     - conn: A Plug.Conn struct.
   """
-  @spec current_user(Plug.Conn.t) :: {:ok, term} | :error
-  def current_user(%{private: private} = _conn) do
-    Map.fetch(private, :authex_current_user)
-  end
-  def current_user(_) do
-    :error
-  end
+  @callback current_user(Plug.Conn.t()) :: {:ok, any} | :error
 
   @doc """
   Gets the current scopes from a Plug.Conn.
@@ -195,14 +136,191 @@ defmodule Authex do
 
     - conn: A Plug.Conn struct.
   """
-  @spec current_scopes(Plug.Conn.t) :: {:ok, list} | :error
-  def current_scopes(%{private: private} = _conn) do
-    case Map.fetch(private, :authex_token) do
-      {:ok, token} -> Map.fetch(token, :scopes)
-      :error -> :error
+  @callback current_scopes(Plug.Conn.t()) :: {:ok, list} | :error
+
+  @doc """
+  Checks whether a subject is banned.
+
+  Returns a boolean
+
+  ## Parameters
+
+    - token_or_sub: An `Authex.Token` or binary subject.
+  """
+  @callback banned?(token_or_sub) :: boolean
+
+  @doc """
+  Bans a subject.
+
+  ## Parameters
+
+    - token_or_sub: An `Authex.Token` or binary subject.
+  """
+  @callback ban(token_or_sub) :: :ok | :error
+
+  @doc """
+  Unbans a subject.
+
+  ## Parameters
+
+    - token_or_sub: An `Authex.Token` or binary subject.
+  """
+  @callback unban(token_or_sub) :: :ok | :error
+
+  @doc """
+  Checks whether a jti is blacklisted.
+
+  Returns a boolean
+
+  ## Parameters
+
+    - token_or_jti: An `Authex.Token` or binary jti.
+  """
+  @callback blacklisted?(token_or_jti) :: boolean
+
+  @doc """
+  Blacklists a jti.
+
+  ## Parameters
+
+    - token_or_jti: An `Authex.Token` or binary jti.
+  """
+  @callback blacklist(token_or_jti) :: :ok | :error
+
+  @doc """
+  Unblacklists a jti.
+
+  ## Parameters
+
+    - token_or_jti: An `Authex.Token` or binary jti.
+  """
+  @callback unblacklist(token_or_jti) :: :ok | :error
+
+  @doc """
+  Sets the secret key that will be used to sign our tokens with.
+
+  ## Parameters
+
+    - secret: A binary secret.
+  """
+  @callback set_secret(binary) :: :ok
+
+  @doc """
+  Fetches a config value.
+
+  ## Parameters
+
+    - key: A binary secret.
+    - default: A default value if none is present.
+  """
+  @callback config(key :: atom, default :: any) :: any
+
+  @type t :: module
+
+  defmacro __using__(opts) do
+    quote bind_quoted: [opts: opts] do
+      @otp_app Keyword.fetch!(opts, :otp_app)
+
+      def token(claims \\ [], opts \\ []) do
+        Token.new(__MODULE__, claims, opts)
+      end
+
+      def sign(%Token{} = token, opts \\ []) do
+        __MODULE__
+        |> Signer.new(opts)
+        |> Signer.compact(token)
+      end
+
+      def verify(compact_token, opts \\ []) do
+        Verifier.run(__MODULE__, compact_token, opts)
+      end
+
+      def from_token(%Token{} = token) do
+        serializer = config(:serializer)
+        Serializer.from_token(serializer, token)
+      end
+
+      def from_compact_token(compact_token, opts \\ []) when is_binary(compact_token) do
+        case verify(compact_token, opts) do
+          {:ok, token} -> from_token(token)
+          error -> error
+        end
+      end
+
+      def for_token(resource) do
+        serializer = config(:serializer) || raise Authex.Error, "no serializer configured"
+        Serializer.for_token(serializer, resource)
+      end
+
+      def for_compact_token(resource, opts \\ []) do
+        resource
+        |> for_token()
+        |> sign(opts)
+      end
+
+      def current_user(%Plug.Conn{private: private}) do
+        Map.fetch(private, :authex_current_user)
+      end
+
+      def current_user(_) do
+        :error
+      end
+
+      def current_scopes(%Plug.Conn{private: private}) do
+        case Map.fetch(private, :authex_token) do
+          {:ok, token} -> Map.fetch(token, :scopes)
+          :error -> :error
+        end
+      end
+
+      def current_scopes(_) do
+        :error
+      end
+
+      def banned?(token_or_sub) do
+        banlist = config(:banlist, false)
+        Banlist.get(banlist, token_or_sub)
+      end
+
+
+      def ban(token_or_sub) do
+        banlist = config(:banlist, false)
+        Banlist.set(banlist, token_or_sub)
+      end
+
+      def unban(token_or_sub) do
+        banlist = config(:banlist, false)
+        Banlist.del(banlist, token_or_sub)
+      end
+
+      def blacklisted?(token_or_jti) do
+        blacklist = config(:blacklist, token_or_jti)
+        Blacklist.get(blacklist, token_or_jti)
+      end
+
+      def blacklist(token_or_jti) do
+        blacklist = config(:blacklist, false)
+        Blacklist.set(blacklist, token_or_jti)
+      end
+
+      def unblacklist(token_or_jti) do
+        blacklist = config(:blacklist, false)
+        Blacklist.del(blacklist, token_or_jti)
+      end
+
+      def set_secret(secret) do
+        config = @otp_app
+        |> Application.get_env(__MODULE__, [])
+        |> Keyword.put(:secret, secret)
+
+        Application.put_env(@otp_app, __MODULE__, config)
+      end
+
+      def config(key, default \\ nil) do
+        @otp_app
+        |> Application.get_env(__MODULE__, [])
+        |> Keyword.get(key, default)
+      end
     end
-  end
-  def current_scopes(_) do
-    :error
   end
 end

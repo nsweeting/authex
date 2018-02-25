@@ -1,9 +1,9 @@
-defmodule Authex.Plug.Forbidden do
+defmodule Authex.ForbiddenPlug do
   import Plug.Conn
 
   @spec init(list) :: list
-  def init(options \\ []) do
-    options
+  def init(opts \\ []) do
+    opts
   end
 
   def call(conn, _options) do
