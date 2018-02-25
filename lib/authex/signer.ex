@@ -21,7 +21,7 @@ defmodule Authex.Signer do
 
   ## Parameters
 
-    - auth: An auth module.
+    - auth: An `Authex` module.
     - options: A keyword list of options.
 
   ## Options

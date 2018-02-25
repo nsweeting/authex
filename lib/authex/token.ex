@@ -46,6 +46,7 @@ defmodule Authex.Token do
 
   ## Parameters
 
+    - auth: An `Authex` module.
     - claims: A keyword list of JWT claims.
     - options: A keyword list of options.
 
