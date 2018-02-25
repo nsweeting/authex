@@ -1,4 +1,4 @@
-defmodule Authex.Serializer.Basic do
+defmodule Serializer.Test do
   use Authex.Serializer
 
   alias Authex.Token
@@ -8,9 +8,10 @@ defmodule Authex.Serializer.Basic do
   end
 
   def handle_for_token(%{id: id, scopes: scopes} = _resource) do
-    Token.new([sub: id, scopes: scopes])
+    Auth.Test.token(sub: id, scopes: scopes)
   end
+
   def handle_for_token(%{id: id}) do
-    Token.new([sub: id])
+    Auth.Test.token(sub: id)
   end
 end

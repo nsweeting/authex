@@ -1,16 +1,19 @@
 defmodule Authex.Signer do
-  alias Authex.Config
   alias Authex.Signer
+  alias Authex.Token
 
-  @type claims :: %{binary => binary}
+  @type option ::
+          {:secret, binary}
+          | {:alg, atom}
+  @type options :: [option]
   @type t :: %__MODULE__{
-    jwk:         integer,
-    jws:         integer
-  }
+          jwk: integer,
+          jws: integer
+        }
 
   defstruct [
     :jwk,
-    :jws,
+    :jws
   ]
 
   @doc """
@@ -18,48 +21,46 @@ defmodule Authex.Signer do
 
   ## Parameters
 
+    - auth: An auth module.
     - options: A keyword list of options.
 
   ## Options
     * `:secret` - the secret to sign the token with.
     * `:alg` - the algorithm to sign the token with.
   """
-  @spec new(list) :: t
-  def new(options \\ []) do
-    options = Config.options(:signer, options)
+  @spec new(auth :: Authex.t(), options :: options) :: t
+  def new(auth, opts \\ []) do
+    opts = build_options(auth, opts)
 
-    secret  = Keyword.get(options, :secret)
-    alg     = Keyword.get(options, :alg)
-  
     %Signer{}
-    |> put_jwk(secret)
-    |> put_jws(alg)
+    |> put_jwk(opts.secret)
+    |> put_jws(opts.alg)
   end
 
   @doc """
-  Creates a new binary compact token from the Authex.Signer struct and
-  binary claims map.
+  Creates a new binary compact token from the `Authex.Signer` and `Authex.Token`
+  structs.
 
   ## Parameters
 
-    - signer - An Authex.Signer struct.
-    - cliams: A binary claims map.
-
-  ## Examples
-
-      iex> token = Authex.Token.new()
-      iex> claims = Authex.Token.get_claims(token)
-      iex> signer = Authex.Signer.new()
-      iex> signer |> Authex.Signer.compact(claims) |> is_binary() 
-      true
+    - signer - An `Authex.Signer` struct.
+    - token: An `Authex.Token` struct.
   """
-  @spec compact(t, claims) :: binary
-  def compact(%Signer{jwk: jwk, jws: jws}, claims) do
-    {_, compact_token} = jwk
-    |> JOSE.JWT.sign(jws, claims)
-    |> JOSE.JWS.compact()
+  @spec compact(signer :: Authex.Signer.t(), token :: Authex.Token.t()) :: Authex.Token.compact()
+  def compact(signer, token) do
+    claims = Token.get_claims(token)
+
+    {_, compact_token} =
+      signer.jwk
+      |> JOSE.JWT.sign(signer.jws, claims)
+      |> JOSE.JWS.compact()
 
     compact_token
+  end
+
+  @doc false
+  def put_jwk(_verifier, nil) do
+    raise Authex.Error, "secret cannot be nil"
   end
 
   @doc false
@@ -72,13 +73,23 @@ defmodule Authex.Signer do
   def put_jws(signer, :hs256) do
     %{signer | jws: %{"alg" => "HS256"}}
   end
+
   def put_jws(signer, :hs384) do
     %{signer | jws: %{"alg" => "HS384"}}
   end
+
   def put_jws(signer, :hs512) do
     %{signer | jws: %{"alg" => "HS512"}}
   end
+
   def put_jws(_, _) do
-    raise ArgumentError, "alg not implemented"
+    raise Authex.Error, "alg not implemented"
+  end
+
+  defp build_options(auth, opts) do
+    Enum.into(opts, %{
+      alg: auth.config(:default_alg, :hs256),
+      secret: auth.config(:secret)
+    })
   end
 end

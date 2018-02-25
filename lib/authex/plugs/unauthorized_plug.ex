@@ -1,9 +1,9 @@
-defmodule Authex.Plug.Unauthorized do
+defmodule Authex.UnauthorizedPlug do
   import Plug.Conn
 
   @spec init(list) :: list
-  def init(options \\ []) do
-    options
+  def init(opts \\ []) do
+    opts
   end
 
   def call(conn, _options) do

@@ -5,12 +5,6 @@ defmodule Authex.Secret do
   ## Parameters
 
     - length: the length of the secret.
-
-  ## Examples
-
-      iex> {:ok, secret} = Authex.Secret.new(100)
-      iex> String.length(secret)
-      100
   """
   @spec new(integer) :: binary | :error
   def new(length \\ 64)

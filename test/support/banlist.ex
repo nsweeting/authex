@@ -1,4 +1,4 @@
-defmodule Authex.Banlist.Basic do
+defmodule Banlist.Test do
   use Agent
   use Authex.Banlist
 
@@ -8,7 +8,7 @@ defmodule Authex.Banlist.Basic do
 
   def handle_get(sub) do
     __MODULE__
-    |> Agent.get(&(&1))
+    |> Agent.get(& &1)
     |> MapSet.member?(sub)
   end
 
