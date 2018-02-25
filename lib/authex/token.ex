@@ -42,7 +42,7 @@ defmodule Authex.Token do
             meta: %{}
 
   @doc """
-  Creates a new Authex.Token struct from the given claims and options
+  Creates a new `Authex.Token` struct from the given claims and options
 
   ## Parameters
 
