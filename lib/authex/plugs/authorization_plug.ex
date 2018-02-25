@@ -3,12 +3,8 @@ defmodule Authex.AuthorizationPlug do
 
   alias Authex.Token
 
-  def init({auth, opts}) do
-    build_options(auth, opts)
-  end
-
-  def init(auth) do
-    build_options(auth, [])
+  def init(opts \\ []) do
+    build_options(opts)
   end
 
   @spec call(Plug.Conn.t(), map) :: Plug.Conn.t()
@@ -44,8 +40,8 @@ defmodule Authex.AuthorizationPlug do
   end
 
   defp fetch_current_scopes(conn, opts) do
-    module = Map.get(opts, :module)
-    apply(module, :current_scopes, [conn])
+    auth = Map.get(opts, :auth)
+    apply(auth, :current_scopes, [conn])
   end
 
   defp verify_scope(permits, action, scopes) do
@@ -69,9 +65,9 @@ defmodule Authex.AuthorizationPlug do
     apply(handler, :call, [conn, []])
   end
 
-  defp build_options(auth, opts) do
+  defp build_options(opts) do
+    auth = Keyword.get(opts, :auth) || raise Authex.Error, "auth module missing"
     Enum.into(opts, %{
-      module: auth,
       forbidden: auth.config(:forbidden, Authex.ForbiddenPlug),
       permits: []
     })

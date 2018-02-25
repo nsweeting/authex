@@ -179,7 +179,7 @@ And we can use the plug as follows:
 defmodule MyApp.Web.UserController do
   use MyApp.Web, :controller
 
-  plug Authex.AuthenticationPlug, MyApp.Auth
+  plug Authex.AuthenticationPlug, auth: MyApp.Auth
 
   def show(conn, _params) do
     with {:ok, %{id: id}} <- MyApp.Auth.current_user(conn),
@@ -224,8 +224,8 @@ config :my_app, MyApp.Auth, [
 defmodule MyApp.Web.UserController do
   use MyApp.Web, :controller
 
-  plug Authex.AuthenticationPlug, MyApp.Auth
-  plug Authex.AuthorizationPlug, {MyApp.Auth, permits: ["user", "admin"]}
+  plug Authex.AuthenticationPlug, auth: MyApp.Auth
+  plug Authex.AuthorizationPlug, auth: MyApp.Auth, permits: ["user", "admin"]
 
   def show(conn, _params) do
     with {:ok, %{id: id}} <- MyApp.Auth.current_user(conn),

@@ -1,12 +1,8 @@
 defmodule Authex.AuthenticationPlug do
   import Plug.Conn
 
-  def init({auth, opts}) do
-    build_options(auth, opts)
-  end
-
-  def init(auth) do
-    build_options(auth, [])
+  def init(opts \\ []) do
+    build_options(opts)
   end
 
   @spec call(Plug.Conn.t(), map) :: Plug.Conn.t()
@@ -29,8 +25,8 @@ defmodule Authex.AuthenticationPlug do
   end
 
   defp verify_token(compact, opts) do
-    module = Map.get(opts, :module)
-    apply(module, :verify, [compact])
+    auth = Map.get(opts, :auth)
+    apply(auth, :verify, [compact])
   end
 
   defp parse_header(header) do
@@ -44,9 +40,9 @@ defmodule Authex.AuthenticationPlug do
   end
 
   defp put_current_user(conn, token, opts) do
-    module = Map.get(opts, :module)
+    auth = Map.get(opts, :auth)
 
-    case apply(module, :from_token, [token]) do
+    case apply(auth, :from_token, [token]) do
       :error -> :error
       user -> {:ok, put_private(conn, :authex_current_user, user)}
     end
@@ -58,9 +54,9 @@ defmodule Authex.AuthenticationPlug do
     apply(handler, :call, [conn, opts])
   end
 
-  defp build_options(auth, opts) do
+  defp build_options(opts) do
+    auth = Keyword.get(opts, :auth) || raise Authex.Error, "auth module missing"
     Enum.into(opts, %{
-      module: auth,
       unauthorized: auth.config(:unauthorized, Authex.UnauthorizedPlug)
     })
   end
