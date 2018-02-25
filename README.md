@@ -252,7 +252,7 @@ MyApp.Auth.unblacklist(token)
 
 By default, if we configure a blacklist via the config options, our `verify/1` process will also check the blacklist. The same process is used with the `Authex.AuthorizationPlug` plug.
 
-Alternatively, you can setup your own blacklist by `use`ing the `Authex.Blacklist` behaviour. The module must implement `handle_get/1`, `handle_set/1` and `handle_del/1`. For an example usage (but not production usable) - check out a [basic example](https://github.com/nsweeting/authex/blob/master/test/support/authex/blacklist.ex).
+Alternatively, you can setup your own blacklist by `use`ing the `Authex.Blacklist` behaviour. The module must implement `handle_get/1`, `handle_set/1` and `handle_del/1`. For an example usage (but not production usable) - check out a [basic example](https://github.com/nsweeting/authex/blob/master/test/support/blacklist.ex).
 
 ## Banning Subjects
 
