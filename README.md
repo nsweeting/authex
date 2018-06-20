@@ -95,6 +95,13 @@ Once we have a `Authex.Token` struct, we can sign it to create a compact token b
 |> MyApp.Auth.sign()
 ```
 
+## Signing Tokens with custom ttl (expiry time)
+```elixir
+ [sub: 1, scopes: ["admin/read"]]
+ |> MyApp.Auth.token(ttl: 2 * 24 * 60 * 60)
+ |> MyApp.Auth.sign()
+```
+
 ## Verifying Tokens
 
 Once we have a compact token binary, we can verify it and turn it back to an `Authex.Token` struct.
