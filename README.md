@@ -158,7 +158,7 @@ MyApp.Auth.from_compact_token(compact_token)
 
 ## Authenticating Endpoints
 
-We can authenticate a Phoenix controller using the `Authex.AuthenticationPlug` plug. This plug looks for the `Authenicate: Bearer mytoken` header. It will then verify, and deserialize the token using our configured serializer.
+We can authenticate a Phoenix controller using the `Authex.AuthenticationPlug` plug. This plug looks for the `Authorization: Bearer mytoken` header. It will then verify, and deserialize the token using our configured serializer.
 
 We can access our current user from the conn using the `current_user/1` function.
 
