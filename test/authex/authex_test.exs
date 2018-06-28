@@ -126,6 +126,7 @@ defmodule AuthexTest do
 
     test "will raise an error if no serializer is set" do
       token = Auth.token(sub: 1, scopes: ["foo"])
+
       assert_raise Authex.Error, "no serializer configured", fn ->
         Auth.from_token(token)
       end
@@ -142,6 +143,7 @@ defmodule AuthexTest do
     test "will raise an error if no serializer is set" do
       set_config(secret: "foo")
       compact_token = [sub: 1, scopes: ["foo"]] |> Auth.token() |> Auth.sign()
+
       assert_raise Authex.Error, "no serializer configured", fn ->
         Auth.from_compact_token(compact_token)
       end

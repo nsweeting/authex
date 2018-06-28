@@ -7,7 +7,7 @@ defmodule Mix.Tasks.Authex.Gen.Secret do
   Generates a secret and prints it to the terminal.
 
       mix authex.gen.secret [length]
-  
+
   By default, mix authex.gen.secret generates a key 64 characters long.
   The minimum value for `length` is 32.
   """
@@ -15,12 +15,14 @@ defmodule Mix.Tasks.Authex.Gen.Secret do
 
   @doc false
   def run([]), do: run(["64"])
+
   def run([int]) do
     int
     |> parse!()
     |> generate()
     |> Mix.Shell.IO.info()
   end
+
   def run([_ | _]), do: invalid_args!()
 
   defp parse!(int) do
@@ -34,6 +36,7 @@ defmodule Mix.Tasks.Authex.Gen.Secret do
     {:ok, secret} = Authex.Secret.new(length)
     secret
   end
+
   defp generate(_), do: Mix.raise("The secret should be at least 32 characters long")
 
   @spec invalid_args!() :: no_return()

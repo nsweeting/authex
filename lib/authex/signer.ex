@@ -2,19 +2,21 @@ defmodule Authex.Signer do
   alias Authex.Signer
   alias Authex.Token
 
-  @type option ::
-          {:secret, binary}
-          | {:alg, atom}
-  @type options :: [option]
-  @type t :: %__MODULE__{
-          jwk: integer,
-          jws: integer
-        }
-
   defstruct [
     :jwk,
     :jws
   ]
+
+  @type option ::
+          {:secret, binary}
+          | {:alg, atom}
+
+  @type options :: [option]
+
+  @type t :: %__MODULE__{
+          jwk: integer | nil,
+          jws: integer | nil
+        }
 
   @doc """
   Creates a new Authex.Signer struct from the options.
@@ -28,7 +30,6 @@ defmodule Authex.Signer do
     * `:secret` - the secret to sign the token with.
     * `:alg` - the algorithm to sign the token with.
   """
-  @spec new(auth :: Authex.t(), options :: options) :: t
   def new(auth, opts \\ []) do
     opts = build_options(auth, opts)
 
@@ -46,7 +47,6 @@ defmodule Authex.Signer do
     - signer - An `Authex.Signer` struct.
     - token: An `Authex.Token` struct.
   """
-  @spec compact(signer :: Authex.Signer.t(), token :: Authex.Token.t()) :: Authex.Token.compact()
   def compact(signer, token) do
     claims = Token.get_claims(token)
 
@@ -59,14 +59,14 @@ defmodule Authex.Signer do
   end
 
   @doc false
-  def put_jwk(_verifier, nil) do
-    raise Authex.Error, "secret cannot be nil"
+  def put_jwk(signer, secret) when is_binary(secret) do
+    jwk = %{"kty" => "oct", "k" => secret}
+    %{signer | jwk: jwk}
   end
 
   @doc false
-  def put_jwk(signer, secret) do
-    jwk = %{"kty" => "oct", "k" => secret}
-    %{signer | jwk: jwk}
+  def put_jwk(_, _) do
+    raise Authex.Error, "secret cannot be nil"
   end
 
   @doc false

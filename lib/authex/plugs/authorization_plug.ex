@@ -67,6 +67,7 @@ defmodule Authex.AuthorizationPlug do
 
   defp build_options(opts) do
     auth = Keyword.get(opts, :auth) || raise Authex.Error, "auth module missing"
+
     Enum.into(opts, %{
       forbidden: auth.config(:forbidden, Authex.ForbiddenPlug),
       permits: []

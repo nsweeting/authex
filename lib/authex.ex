@@ -42,7 +42,7 @@ defmodule Authex do
     * `:alg` - the algorithm to sign the token with.
   """
   @callback sign(token :: Authex.Token.t(), options :: Authex.Signer.options()) ::
-              compact_token :: Authex.Token.compact()
+              compact_token :: Authex.Token.compact() | no_return
 
   @doc """
   Verifies a compact token.
@@ -73,7 +73,7 @@ defmodule Authex do
 
   Returns any term defined by the serializer.
 
-  Otherwise, returns `:error`. 
+  Otherwise, returns `:error`.
 
   ## Parameters
 
@@ -86,13 +86,16 @@ defmodule Authex do
 
   Returns any term defined by the serializer.
 
-  Otherwise, returns `:error`. 
+  Otherwise, returns `:error`.
 
   ## Parameters
 
     - compact_token: A binary compact token.
   """
-  @callback from_compact_token(compact_token :: Authex.Token.compact(), options :: Authex.Signer.options()) :: any | {:error, atom}
+  @callback from_compact_token(
+              compact_token :: Authex.Token.compact(),
+              options :: Authex.Signer.options()
+            ) :: any | {:error, atom}
 
   @doc """
   Turns a usable data structure into an `Authex.Token` using a serializer module.
@@ -282,7 +285,6 @@ defmodule Authex do
         Banlist.get(banlist, token_or_sub)
       end
 
-
       def ban(token_or_sub) do
         banlist = config(:banlist, false)
         Banlist.set(banlist, token_or_sub)
@@ -309,9 +311,10 @@ defmodule Authex do
       end
 
       def set_secret(secret) do
-        config = @otp_app
-        |> Application.get_env(__MODULE__, [])
-        |> Keyword.put(:secret, secret)
+        config =
+          @otp_app
+          |> Application.get_env(__MODULE__, [])
+          |> Keyword.put(:secret, secret)
 
         Application.put_env(@otp_app, __MODULE__, config)
       end

@@ -1,7 +1,7 @@
 defmodule Authex.Mixfile do
   use Mix.Project
 
-  @version "0.2.1"
+  @version "0.2.2"
 
   def project do
     [
@@ -9,7 +9,7 @@ defmodule Authex.Mixfile do
       version: @version,
       elixir: "~> 1.5",
       elixirc_paths: elixirc_paths(Mix.env()),
-      start_permanent: Mix.env == :prod,
+      start_permanent: Mix.env() == :prod,
       deps: deps(),
       description: description(),
       package: package(),
@@ -39,7 +39,7 @@ defmodule Authex.Mixfile do
       files: ["lib", "mix.exs", "README*"],
       maintainers: ["Nicholas Sweeting"],
       licenses: ["MIT"],
-      links:  %{"GitHub" => "https://github.com/nsweeting/authex"}
+      links: %{"GitHub" => "https://github.com/nsweeting/authex"}
     ]
   end
 
@@ -55,7 +55,7 @@ defmodule Authex.Mixfile do
   defp deps do
     [
       {:jose, "~> 1.8"},
-      {:uuid, "~> 1.1" },
+      {:uuid, "~> 1.1"},
       {:poison, "~> 3.1"},
       {:plug, "~> 1.0"},
       {:ex_doc, ">= 0.0.0", only: :dev}
