@@ -95,6 +95,13 @@ Once we have a `Authex.Token` struct, we can sign it to create a compact token b
 |> MyApp.Auth.sign()
 ```
 
+## Signing Tokens with custom ttl (expiry time)
+```elixir
+ [sub: 1, scopes: ["admin/read"]]
+ |> MyApp.Auth.token(ttl: 2 * 24 * 60 * 60)
+ |> MyApp.Auth.sign()
+```
+
 ## Verifying Tokens
 
 Once we have a compact token binary, we can verify it and turn it back to an `Authex.Token` struct.
@@ -158,7 +165,7 @@ MyApp.Auth.from_compact_token(compact_token)
 
 ## Authenticating Endpoints
 
-We can authenticate a Phoenix controller using the `Authex.AuthenticationPlug` plug. This plug looks for the `Authenicate: Bearer mytoken` header. It will then verify, and deserialize the token using our configured serializer.
+We can authenticate a Phoenix controller using the `Authex.AuthenticationPlug` plug. This plug looks for the `Authorization: Bearer mytoken` header. It will then verify, and deserialize the token using our configured serializer.
 
 We can access our current user from the conn using the `current_user/1` function.
 
