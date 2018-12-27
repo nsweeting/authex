@@ -1,7 +1,7 @@
 defmodule Authex.Mixfile do
   use Mix.Project
 
-  @version "0.2.2"
+  @version "0.3.0"
 
   def project do
     [
@@ -13,6 +13,9 @@ defmodule Authex.Mixfile do
       deps: deps(),
       description: description(),
       package: package(),
+
+      # Docs
+      name: "Authex",
       docs: docs()
     ]
   end
@@ -45,9 +48,20 @@ defmodule Authex.Mixfile do
 
   defp docs do
     [
+      main: "Authex",
+      source_ref: "v#{@version}",
+      canonical: "http://hexdocs.pm/authex",
       extras: ["README.md"],
       main: "readme",
-      source_url: "https://github.com/nsweeting/authex"
+      source_url: "https://github.com/nsweeting/authex",
+      groups_for_modules: [
+        Plugs: [
+          Authex.AuthenticationPlug,
+          Authex.AuthorizationPlug,
+          Authex.UnauthorizedPlug,
+          Authex.ForbiddenPlug
+        ]
+      ]
     ]
   end
 
@@ -56,9 +70,9 @@ defmodule Authex.Mixfile do
     [
       {:jose, "~> 1.8"},
       {:uuid, "~> 1.1"},
+      {:plug, "~> 1.7"},
       {:poison, "~> 3.1"},
-      {:plug, "~> 1.0"},
-      {:ex_doc, ">= 0.0.0", only: :dev}
+      {:ex_doc, "~> 0.19", only: :dev, runtime: false}
     ]
   end
 end

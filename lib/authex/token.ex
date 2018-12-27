@@ -1,4 +1,11 @@
 defmodule Authex.Token do
+  @moduledoc """
+  A struct wrapper for token claims.
+
+  Typically, we shouldnt need to directly interact with this module. Rather, we
+  should use the `c:Authex.token/2` callback defined in our auth module.
+  """
+
   alias Authex.Token
 
   defstruct nbf: nil,
@@ -42,13 +49,7 @@ defmodule Authex.Token do
   @type compact :: binary
 
   @doc """
-  Creates a new `Authex.Token` struct from the given claims and options
-
-  ## Parameters
-
-    - auth: An `Authex` module.
-    - claims: A keyword list of JWT claims.
-    - options: A keyword list of options.
+  Creates a new `Authex.Token` struct from the given claims and options.
 
   ## Options
     * `:time` - the base time (timestamp format) in which to use.
@@ -56,9 +57,7 @@ defmodule Authex.Token do
 
   ## Examples
 
-      iex> token = Authex.Token.new([sub: 1], [ttl: 60])
-      iex> with %Authex.Token{sub: sub} <- token, do: sub
-      1
+      Authex.Token.new(MyApp.Auth, [sub: 1], [ttl: 60])
   """
   def new(auth, claims \\ [], opts \\ []) do
     claims = build_claims(auth, claims)

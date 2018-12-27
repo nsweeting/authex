@@ -1,3 +1,3 @@
-defmodule Auth.Test do
+defmodule Auth do
   use Authex, otp_app: :authex
 end

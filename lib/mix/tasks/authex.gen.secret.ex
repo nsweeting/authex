@@ -14,6 +14,8 @@ defmodule Mix.Tasks.Authex.Gen.Secret do
   use Mix.Task
 
   @doc false
+  def run(opts \\ [])
+
   def run([]), do: run(["64"])
 
   def run([int]) do
@@ -33,8 +35,10 @@ defmodule Mix.Tasks.Authex.Gen.Secret do
   end
 
   defp generate(length) when length > 31 do
-    {:ok, secret} = Authex.Secret.new(length)
-    secret
+    case Authex.Secret.new(length) do
+      :error -> Mix.raise("The secret could not be generated")
+      {:ok, secret} -> secret
+    end
   end
 
   defp generate(_), do: Mix.raise("The secret should be at least 32 characters long")

@@ -4,9 +4,13 @@ defmodule Authex.AuthorizationPlugTest do
 
   import Authex.TestHelpers
 
-  alias Auth.Test, as: Auth
   alias Authex.AuthenticationPlug
   alias Authex.AuthorizationPlug
+
+  setup_all do
+    Auth.start_link()
+    :ok
+  end
 
   setup do
     reset_config()
@@ -30,7 +34,7 @@ defmodule Authex.AuthorizationPlugTest do
     end
 
     test "returns config options if they are present" do
-      set_config(forbidden: Other)
+      save_config(forbidden: Other)
 
       assert AuthorizationPlug.init(auth: Auth) == %{
                auth: Auth,
@@ -91,7 +95,7 @@ defmodule Authex.AuthorizationPlugTest do
   end
 
   defp authenticate(conn, scopes \\ []) do
-    set_config(secret: "foo", serializer: Serializer.Test)
+    save_config(secret: "foo", serializer: Serializer)
     opts = AuthenticationPlug.init(auth: Auth)
     compact_token = Auth.token(scopes: scopes) |> Auth.sign()
 

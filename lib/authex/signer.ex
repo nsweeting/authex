@@ -1,35 +1,14 @@
 defmodule Authex.Signer do
-  alias Authex.Signer
-  alias Authex.Token
+  @moduledoc false
+
+  alias Authex.{Signer, Token}
 
   defstruct [
     :jwk,
     :jws
   ]
 
-  @type option ::
-          {:secret, binary}
-          | {:alg, atom}
-
-  @type options :: [option]
-
-  @type t :: %__MODULE__{
-          jwk: integer | nil,
-          jws: integer | nil
-        }
-
-  @doc """
-  Creates a new Authex.Signer struct from the options.
-
-  ## Parameters
-
-    - auth: An `Authex` module.
-    - options: A keyword list of options.
-
-  ## Options
-    * `:secret` - the secret to sign the token with.
-    * `:alg` - the algorithm to sign the token with.
-  """
+  @doc false
   def new(auth, opts \\ []) do
     opts = build_options(auth, opts)
 
@@ -38,15 +17,7 @@ defmodule Authex.Signer do
     |> put_jws(opts.alg)
   end
 
-  @doc """
-  Creates a new binary compact token from the `Authex.Signer` and `Authex.Token`
-  structs.
-
-  ## Parameters
-
-    - signer - An `Authex.Signer` struct.
-    - token: An `Authex.Token` struct.
-  """
+  @doc false
   def compact(signer, token) do
     claims = Token.get_claims(token)
 

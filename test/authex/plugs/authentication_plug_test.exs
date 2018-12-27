@@ -5,8 +5,12 @@ defmodule Authex.AuthenticationPlugTest do
   import Authex.TestHelpers
   import Plug.Conn, only: [put_req_header: 3]
 
-  alias Auth.Test, as: Auth
   alias Authex.AuthenticationPlug
+
+  setup_all do
+    Auth.start_link()
+    :ok
+  end
 
   setup do
     reset_config()
@@ -28,7 +32,7 @@ defmodule Authex.AuthenticationPlugTest do
     end
 
     test "returns config options if they are present" do
-      set_config(unauthorized: Other)
+      save_config(unauthorized: Other)
 
       assert AuthenticationPlug.init(auth: Auth) == %{
                auth: Auth,
@@ -51,14 +55,14 @@ defmodule Authex.AuthenticationPlugTest do
     end
 
     test "returns a plug with 401 status if authorization is invalid" do
-      set_config(secret: "foo")
+      save_config(secret: "foo")
       opts = AuthenticationPlug.init(auth: Auth)
       conn = conn(:get, "/") |> put_req_header("authorization", "Bearer bad_token")
       assert %{status: 401, state: :sent, halted: true} = AuthenticationPlug.call(conn, opts)
     end
 
     test "returns a plug with 401 status if authorization is expired" do
-      set_config(secret: "foo")
+      save_config(secret: "foo")
       compact_token = Auth.token([], ttl: -1) |> Auth.sign()
       opts = AuthenticationPlug.init(auth: Auth)
       conn = conn(:get, "/") |> put_req_header("authorization", "Bearer #{compact_token}")
@@ -66,8 +70,8 @@ defmodule Authex.AuthenticationPlugTest do
     end
 
     test "returns a plug with 401 status if jti is blacklisted" do
-      {:ok, pid} = Blacklist.Test.start_link()
-      set_config(secret: "foo", blacklist: Blacklist.Test)
+      {:ok, pid} = Mocklist.start_link()
+      save_config(secret: "foo", blacklist: Mocklist)
       token = Auth.token()
       Auth.blacklist(token)
       compact_token = Auth.sign(token)
@@ -78,8 +82,8 @@ defmodule Authex.AuthenticationPlugTest do
     end
 
     test "returns a plug with 401 status if sub is banned" do
-      {:ok, pid} = Banlist.Test.start_link()
-      set_config(secret: "foo", banlist: Banlist.Test)
+      {:ok, pid} = Mocklist.start_link()
+      save_config(secret: "foo", banlist: Mocklist)
       token = Auth.token()
       Auth.ban(token)
       compact_token = Auth.sign(token)
@@ -90,7 +94,7 @@ defmodule Authex.AuthenticationPlugTest do
     end
 
     test "returns a plug with no modifications if authorization is valid" do
-      set_config(secret: "foo", serializer: Serializer.Test)
+      save_config(secret: "foo", serializer: Serializer)
       compact_token = Auth.token() |> Auth.sign()
       opts = AuthenticationPlug.init(auth: Auth)
       conn = conn(:get, "/") |> put_req_header("authorization", "Bearer #{compact_token}")
@@ -98,7 +102,7 @@ defmodule Authex.AuthenticationPlugTest do
     end
 
     test "sets the current user private key" do
-      set_config(secret: "foo", serializer: Serializer.Test)
+      save_config(secret: "foo", serializer: Serializer)
       compact_token = Auth.token() |> Auth.sign()
       opts = AuthenticationPlug.init(auth: Auth)
       conn = conn(:get, "/") |> put_req_header("authorization", "Bearer #{compact_token}")
@@ -107,7 +111,7 @@ defmodule Authex.AuthenticationPlugTest do
     end
 
     test "sets the token private key" do
-      set_config(secret: "foo", serializer: Serializer.Test)
+      save_config(secret: "foo", serializer: Serializer)
       compact_token = Auth.token() |> Auth.sign()
       opts = AuthenticationPlug.init(auth: Auth)
       conn = conn(:get, "/") |> put_req_header("authorization", "Bearer #{compact_token}")

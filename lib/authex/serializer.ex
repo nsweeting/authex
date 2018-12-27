@@ -1,59 +1,92 @@
 defmodule Authex.Serializer do
-  alias Authex.Serializer
-  alias Authex.Token
+  @moduledoc """
+  Defines a serializer.
 
-  @callback handle_from_token(Authex.Token.t()) :: term | :error
-  @callback handle_for_token(term) :: Authex.Token.t() | :error
+  A serializer is used to convert a resource into a token, as well as a token
+  back into a resource. A typical resource would be something like a user struct.
 
-  @type serializer :: atom
+      defmodule MyApp.Auth.UserSerializer do
+        use Authex.Serializer
+
+        @impl Authex.Serializer
+        def for_token(user, opts) do
+          {:ok, MyApp.Auth.token([sub: user.id, scopes: user.scopes], opts)}
+        end
+
+        @impl Authex.Serializer
+        def from_token(token, _opts) do
+          {:ok, %MyApp.User{id: token.sub, scopes: token.scopes}}
+        end
+      end
+
+  With our serilializer defined, we must add callbacks for `c:for_token/2` to
+  convert our user into a token, as well as for `c:from_token/2` to convert a
+  token into a user
+  """
+
+  @doc """
+  Converts a resource into an `Authex.Token` struct.
+
+  Must return `{:ok, token}` on sucess
+
+  ## Options
+    * `:time` - The base time (timestamp format) in which to use.
+    * `:ttl` - The time-to-live for the token in seconds. The lifetime is based
+    on the time provided via the options, or the current time if not provided.
+  """
+  @callback for_token(term(), options :: Authex.Token.options()) ::
+              {:ok, Authex.Token.t()} | {:error, any()}
+
+  @doc """
+  Converts an `Authex.Token` struct into a resource.
+
+  ## Options
+
+  Any additional options that your serializer might need.
+  """
+  @callback from_token(token :: Authex.Token.t(), options :: keyword()) ::
+              {:ok, term()} | {:error, term()}
+
+  @type t :: module()
 
   defmacro __using__(_) do
     quote location: :keep do
-      @behaviour Serializer
+      @behaviour Authex.Serializer
 
-      def handle_from_token(_) do
-        :error
+      def for_token(_, _) do
+        {:error, :not_implemented}
       end
 
-      def handle_for_token(_) do
-        :error
+      def from_token(_, _) do
+        {:error, :not_implemented}
       end
 
-      defoverridable Serializer
+      defoverridable Authex.Serializer
     end
   end
 
-  @doc """
-  Takes an `Authex.Token` struct and runs the provided serializer against it.
-
-  ## Parameters
-
-    - serializer: A serializer module.
-    - token: An Authex.Token struct.
-  """
-  @spec from_token(serializer, Authex.Token.t()) :: term
-  def from_token(nil, _token) do
-    raise Authex.Error, "no serializer configured"
+  @doc false
+  @spec for_token(serializer :: Authex.Serializer.t(), term(), options :: Authex.Token.options()) ::
+          {:ok, Authex.Token.t()} | {:error, term()}
+  def for_token(nil, _token, _opts) do
+    {:error, :no_serializer}
   end
 
-  def from_token(serializer, %Token{} = token) do
-    apply(serializer, :handle_from_token, [token])
+  def for_token(serializer, resource, opts) do
+    apply(serializer, :for_token, [resource, opts])
   end
 
-  @doc """
-  Takes a resource and turns it into an `Authex.Token` using the provided serializer.
-
-  ## Parameters
-
-    - serializer: A serializer module.
-    - resource: Any data structure the serializer can use.
-  """
-  @spec for_token(serializer, term) :: Authex.Token.t()
-  def for_token(nil, _token) do
-    raise Authex.Error, "no serializer configured"
+  @doc false
+  @spec from_token(
+          serializer :: Authex.Serializer.t(),
+          token :: Authex.Token.t(),
+          options :: keyword()
+        ) :: {:ok, term()} | {:error, term()}
+  def from_token(nil, _token, _opts) do
+    {:error, :no_serializer}
   end
 
-  def for_token(serializer, resource) do
-    apply(serializer, :handle_for_token, [resource])
+  def from_token(serializer, token, opts) do
+    apply(serializer, :from_token, [token, opts])
   end
 end

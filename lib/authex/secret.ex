@@ -1,11 +1,6 @@
 defmodule Authex.Secret do
-  @doc """
-  Creates a new secret to sign tokens with.
+  @moduledoc false
 
-  ## Parameters
-
-    - length: the length of the secret.
-  """
   @spec new(integer) :: binary | :error
   def new(length \\ 64)
 
@@ -17,6 +12,8 @@ defmodule Authex.Secret do
       |> binary_part(0, length)
 
     {:ok, secret}
+  rescue
+    _ -> :error
   end
 
   def new(_) do

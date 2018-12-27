@@ -1,13 +1,68 @@
 defmodule Authex.AuthorizationPlug do
+  @moduledoc """
+  A plug to handle authorization.
+
+  This plug must be passed an auth module in which to authorize with. Otherwise,
+  it will raise an `Authex.Error`. The plug must also only be used after the
+  `Authex.AuthenticationPlug` has been used.
+
+  With it, we can easily authorize a Phoenix controller:
+
+      defmodule MyAppWeb.MyController do
+        use MyAppWeb, :controller
+
+        plug Authex.AuthenticationPlug, auth: MyApp.Auth
+        plug Authex.AuthorizationPlug, auth: MyApp.Auth, permits: ["user", "admin"]
+
+        def show(conn, _params) do
+          with {:ok, %{id: id}} <- MyApp.Auth.current_user(conn),
+              {:ok, user} <- MyApp.Users.get(id)
+          do
+            render(conn, "show.json", user: user)
+          end
+        end
+      end
+
+  The plug checks the scopes of the token and compares them to the "permits" passed
+  to the plug. Authorization works by combining the "permits" with the "type" of
+  request that is being made.
+
+  For example, with our controller above, we are permitting "user" and "admin" access.
+  The show action would be a `GET` request, and would therefore be a "read" type.
+
+  Requests are bucketed under the following types:
+
+    * GET - read
+    * HEAD - read
+    * PUT - write
+    * PATCH - write
+    * POST - write
+    * DELETE - delete
+
+  So, in order to access the show action, our token would require one of the
+  following scopes: `["user/read", "admin/read"]`. Or, the token would require
+  `["user/write", "admin/write"]` to access the update action.
+
+  By default, if authorization fails, the plug sends the conn to the `Authex.ForbiddenPlug`
+  plug. This plug will put a `403` status into the conn with the body `"Forbidden"`.
+  We can configure our own forbidden plug by passing it as an option to the
+  `Authex.AuthorizationPlug` plug or through our config.
+
+      config :my_app, MyApp.Auth, [
+        forbidden: MyApp.ForbiddenPlug
+      ]
+  """
+
+  @behaviour Plug
+
   import Plug.Conn
 
-  alias Authex.Token
-
+  @impl Plug
   def init(opts \\ []) do
     build_options(opts)
   end
 
-  @spec call(Plug.Conn.t(), map) :: Plug.Conn.t()
+  @impl Plug
   def call(conn, opts) do
     with {:ok, permits} <- fetch_permits(opts),
          {:ok, action} <- fetch_action(conn),
@@ -50,7 +105,7 @@ defmodule Authex.AuthorizationPlug do
         permit <> "/" <> action
       end)
 
-    case Token.has_scope?(current_scopes, scopes) do
+    case Authex.Token.has_scope?(current_scopes, scopes) do
       false -> :error
       result -> {:ok, result}
     end

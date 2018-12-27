@@ -1,9 +1,9 @@
 defmodule Authex.Verifier do
-  alias Authex.Banlist
-  alias Authex.Blacklist
-  alias Authex.Token
-  alias Authex.Signer
+  @moduledoc false
 
+  alias Authex.{Repo, Signer, Token}
+
+  @doc false
   def run(auth, compact_token, opts) do
     signer = Signer.new(auth, opts)
     opts = build_options(auth, opts)
@@ -49,7 +49,7 @@ defmodule Authex.Verifier do
   end
 
   defp check_blacklist(blacklist, jti) when is_atom(blacklist) and is_binary(jti) do
-    case Blacklist.get(blacklist, jti) do
+    case Repo.exists?(blacklist, jti) do
       false -> :ok
       true -> {:error, :blacklisted}
       :error -> {:error, :blacklist_error}
@@ -65,7 +65,7 @@ defmodule Authex.Verifier do
   end
 
   defp check_banlist(banlist, sub) when is_atom(banlist) do
-    case Banlist.get(banlist, sub) do
+    case Repo.exists?(banlist, sub) do
       false -> :ok
       true -> {:error, :banned}
       :error -> {:error, :banlist_error}

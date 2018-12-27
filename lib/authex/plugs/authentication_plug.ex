@@ -1,11 +1,56 @@
 defmodule Authex.AuthenticationPlug do
+  @moduledoc """
+  A plug to handle authentication.
+
+  This plug must be passed an auth module in which to authenticate with. Otherwise,
+  it will raise an `Authex.Error`.
+
+  With it, we can easily authenticate a Phoenix controller:
+
+      defmodule MyAppWeb.MyController do
+        use MyAppWeb, :controller
+
+        plug Authex.AuthenticationPlug, auth: MyApp.Auth
+
+        def show(conn, _params) do
+          with {:ok, %{id: id}} <- MyApp.Auth.current_user(conn),
+              {:ok, user} <- MyApp.Users.get(id)
+          do
+            render(conn, "show.json", user: user)
+          end
+        end
+      end
+
+  The plug looks for the `Authorization: Bearer mytoken` header. It will then
+  verify and deserialize the token using our configured serializer.
+
+  We can then access our current user from the conn using the `c:Authex.current_user/1`
+  callback.
+
+  By default, if authentication fails, the plug sends the conn to the `Authex.UnauthorizedPlug`
+  plug. This plug will put a `401` status into the conn with the body `"Unauthorized"`.
+  We can configure our own unauthorized plug by passing it as an option to the `Authex.AuthenticationPlug`
+  plug or through our auth module config.
+
+      config :my_app, MyApp.Auth, [
+        unauthorized: MyApp.UnauthorizedPlug
+      ]
+  """
+
+  @behaviour Plug
+
   import Plug.Conn
 
+  @type option :: {:auth, Authex.t()} | {:unauthorized, module()}
+
+  @type options :: [option()]
+
+  @impl Plug
   def init(opts \\ []) do
     build_options(opts)
   end
 
-  @spec call(Plug.Conn.t(), map) :: Plug.Conn.t()
+  @impl Plug
   def call(conn, opts) do
     with {:ok, compact} <- fetch_header_token(conn),
          {:ok, token} <- verify_token(compact, opts),
@@ -43,8 +88,8 @@ defmodule Authex.AuthenticationPlug do
     auth = Map.get(opts, :auth)
 
     case apply(auth, :from_token, [token]) do
-      :error -> :error
-      user -> {:ok, put_private(conn, :authex_current_user, user)}
+      {:ok, user} -> {:ok, put_private(conn, :authex_current_user, user)}
+      {:error, _} -> :error
     end
   end
 
