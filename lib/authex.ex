@@ -474,40 +474,24 @@ defmodule Authex do
   @callback unblacklist(token :: Authex.Token.t()) :: :ok | :error
 
   @doc """
-  Saves the config that is currently associated with our auth moddule.
-
-
+  Saves the config that is currently associated with our auth module.
   """
-  @callback save_config() :: any
+  @callback save_config() :: :ok | :error
 
   @doc """
   Sets the config that is used with our auth module.
-
-  ## Parameters
-
-    - config: A keyword list of config values.
   """
-  @callback save_config(keyword()) :: any
+  @callback save_config(keyword()) :: :ok | :error
 
   @doc """
   Sets a single config that is used with our auth module.
-
-  ## Parameters
-
-    - key: A config key.
-    - value: A config value.
   """
-  @callback save_config(atom(), any()) :: any
+  @callback save_config(atom(), any()) :: :ok | :error
 
   @doc """
   Fetches a config value.
-
-  ## Parameters
-
-    - key: A binary secret.
-    - default: A default value if none is present.
   """
-  @callback config(key :: atom, default :: any) :: any
+  @callback config(key :: atom(), default :: any()) :: any()
 
   defmacro __using__(opts) do
     quote bind_quoted: [opts: opts] do
