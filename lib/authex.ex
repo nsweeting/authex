@@ -639,6 +639,13 @@ defmodule Authex do
         GenServer.call(__MODULE__, {:save_config, key, value})
       end
 
+      def child_spec(config) do
+        %{
+          id: __MODULE__,
+          start: {__MODULE__, :start_link, [config]}
+        }
+      end
+
       # GenServer callbacks
 
       def handle_call(:save_config, _from, config) do
