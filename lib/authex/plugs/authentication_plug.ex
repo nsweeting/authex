@@ -47,11 +47,13 @@ defmodule Authex.AuthenticationPlug do
 
   @impl Plug
   def init(opts \\ []) do
-    build_options(opts)
+    verify_options(opts) && opts
   end
 
   @impl Plug
   def call(conn, opts) do
+    opts = build_options(opts)
+
     with {:ok, compact} <- fetch_header_token(conn),
          {:ok, token} <- verify_token(compact, opts),
          {:ok, conn} <- put_token(conn, token),
@@ -100,10 +102,14 @@ defmodule Authex.AuthenticationPlug do
   end
 
   defp build_options(opts) do
-    auth = Keyword.get(opts, :auth) || raise Authex.Error, "auth module missing"
+    auth = Keyword.get(opts, :auth)
 
     Enum.into(opts, %{
       unauthorized: auth.config(:unauthorized, Authex.UnauthorizedPlug)
     })
+  end
+
+  defp verify_options(opts) do
+    Keyword.has_key?(opts, :auth) || raise Authex.Error, "auth module missing"
   end
 end

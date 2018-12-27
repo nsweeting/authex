@@ -16,31 +16,9 @@ defmodule Authex.AuthorizationPlugTest do
     reset_config()
   end
 
-  describe "opts/1" do
-    test "returns default options if non are provided" do
-      assert AuthorizationPlug.init(auth: Auth) == %{
-               auth: Auth,
-               forbidden: Authex.ForbiddenPlug,
-               permits: []
-             }
-    end
-
+  describe "init/1" do
     test "returns given options if they are provided" do
-      assert AuthorizationPlug.init(auth: Auth, forbidden: Other, permits: ["foo"]) == %{
-               auth: Auth,
-               forbidden: Other,
-               permits: ["foo"]
-             }
-    end
-
-    test "returns config options if they are present" do
-      save_config(forbidden: Other)
-
-      assert AuthorizationPlug.init(auth: Auth) == %{
-               auth: Auth,
-               forbidden: Other,
-               permits: []
-             }
+      assert AuthorizationPlug.init(auth: Auth) == [auth: Auth]
     end
 
     test "raises if the auth module is not present" do

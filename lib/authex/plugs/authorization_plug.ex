@@ -59,11 +59,13 @@ defmodule Authex.AuthorizationPlug do
 
   @impl Plug
   def init(opts \\ []) do
-    build_options(opts)
+    verify_options(opts) && opts
   end
 
   @impl Plug
   def call(conn, opts) do
+    opts = build_options(opts)
+
     with {:ok, permits} <- fetch_permits(opts),
          {:ok, action} <- fetch_action(conn),
          {:ok, scopes} <- fetch_current_scopes(conn, opts),
@@ -121,11 +123,15 @@ defmodule Authex.AuthorizationPlug do
   end
 
   defp build_options(opts) do
-    auth = Keyword.get(opts, :auth) || raise Authex.Error, "auth module missing"
+    auth = Keyword.get(opts, :auth)
 
     Enum.into(opts, %{
       forbidden: auth.config(:forbidden, Authex.ForbiddenPlug),
       permits: []
     })
+  end
+
+  defp verify_options(opts) do
+    Keyword.has_key?(opts, :auth) || raise Authex.Error, "auth module missing"
   end
 end
