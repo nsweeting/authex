@@ -6,7 +6,7 @@ defmodule Authex.Config do
   @doc false
   def save(table_name, config) do
     if ETS.info(table_name) == :undefined do
-      ETS.new(table_name, [:named_table, :protected])
+      ETS.new(table_name, [:named_table, :protected, read_concurrency: true])
     end
 
     ETS.insert(table_name, {:config, config})
