@@ -113,6 +113,13 @@ defmodule AuthexTest do
       assert {:error, :not_ready} = Auth.verify(compact_token)
     end
 
+    test "returns an ok tuple if the token has no nbf or exp claims" do
+      save_config(secret: "foo")
+      token = %{Auth.token() | nbf: nil, exp: nil}
+      compact_token = Auth.sign(token)
+      assert {:ok, %Token{}} = Auth.verify(compact_token)
+    end
+
     test "returns a duplicate of the original token" do
       save_config(secret: "foo")
       token = Auth.token()
