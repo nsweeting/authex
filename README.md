@@ -27,8 +27,24 @@ To get started, we must define our auth module:
 
 ```elixir
 defmodule MyApp.Auth do
-  use Authex, opt_app: :my_app
+  use Authex, otp_app: :my_app
+
+  # Use the runtime init callback to dynamically set our secret.
+  def init(config) do
+    secret = System.get_env("AUTH_SECRET") || "secret"
+    config = Keyword.put(config, :secret, secret)
+
+    {:ok, config}
+  end
 end
+```
+
+And add it to your supervision tree:
+
+```elixir
+children = [
+  MyApp.Auth
+]
 ```
 
 We can then create, sign, and verify tokens:

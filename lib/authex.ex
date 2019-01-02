@@ -503,10 +503,11 @@ defmodule Authex do
       @impl Authex
       def start_link(config \\ []) do
         config = @otp_app |> Application.get_env(__MODULE__, []) |> Keyword.merge(config)
-        {:ok, pid} = GenServer.start_link(__MODULE__, config, name: __MODULE__)
-        save_config()
 
-        {:ok, pid}
+        with {:ok, pid} <- GenServer.start_link(__MODULE__, config, name: __MODULE__) do
+          save_config()
+          {:ok, pid}
+        end
       end
 
       @impl Authex
@@ -539,9 +540,8 @@ defmodule Authex do
 
       @impl Authex
       def from_compact_token(compact_token, opts \\ []) when is_binary(compact_token) do
-        case verify(compact_token, opts) do
-          {:ok, token} -> from_token(token, opts)
-          error -> error
+        with {:ok, token} <- verify(compact_token, opts) do
+          from_token(token, opts)
         end
       end
 
@@ -570,9 +570,8 @@ defmodule Authex do
 
       @impl Authex
       def current_scopes(%Plug.Conn{private: private}) do
-        case Map.fetch(private, :authex_token) do
-          {:ok, token} -> Map.fetch(token, :scopes)
-          :error -> :error
+        with {:ok, token} <- Map.fetch(private, :authex_token) do
+          Map.fetch(token, :scopes)
         end
       end
 
