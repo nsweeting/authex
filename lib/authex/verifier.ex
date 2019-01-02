@@ -28,12 +28,20 @@ defmodule Authex.Verifier do
     end
   end
 
+  defp check_nbf(_, nbf) when is_nil(nbf) do
+    :ok
+  end
+
   defp check_nbf(time, nbf) when is_integer(nbf) and time > nbf do
     :ok
   end
 
   defp check_nbf(_, _) do
     {:error, :not_ready}
+  end
+
+  defp check_exp(_, exp) when is_nil(exp) do
+    :ok
   end
 
   defp check_exp(time, exp) when is_integer(exp) and time < exp do
