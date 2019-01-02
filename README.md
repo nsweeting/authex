@@ -12,7 +12,7 @@ The package can be installed by adding `authex` to your list of dependencies in 
 ```elixir
 def deps do
   [
-    {:authex, "~> 0.3.1"}
+    {:authex, "~> 0.3.2"}
   ]
 end
 ```
