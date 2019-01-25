@@ -7,16 +7,18 @@ Authex is a simple JWT authentication and authorization library for Elixir.
 
 ## Installation
 
-The package can be installed by adding `authex` to your list of dependencies in `mix.exs`:
+The package can be installed by adding `authex` to your list of dependencies in `mix.exs`.
+
+In addition, we must also add a JSON encoder/decoder. [Jason](https://github.com/michalmuskala/jason) is recommended. But any of these will work: [jiffy](https://github.com/davisp/jiffy), [jsone](https://github.com/sile/jsone), [jsx](https://github.com/talentdeficit/jsx), [ojson](https://github.com/potatosalad/erlang-ojson), [Poison](https://github.com/devinus/poison).
+
+Finally, if you wish to use any of the plug functionality, make sure to add the plug dependency.
 
 ```elixir
 def deps do
   [
     {:authex, "~> 1.0"},
-    # Add json dependency - jason is recommended.
     {:jason, "~> 1.0"},
-    # Add plug dependency if you want to use Authex plugs.
-    {:plug, "~> 1.0"}
+    {:plug, "~> 1.0}
   ]
 end
 ```
