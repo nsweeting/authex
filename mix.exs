@@ -23,7 +23,7 @@ defmodule Authex.Mixfile do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      extra_applications: [:logger]
+      extra_applications: [:logger, :plug]
     ]
   end
 
@@ -69,8 +69,8 @@ defmodule Authex.Mixfile do
   defp deps do
     [
       {:jose, "~> 1.8"},
-      {:plug, "~> 1.7"},
       {:poison, "~> 3.1"},
+      {:plug, "~> 1.0", optional: true},
       {:ex_doc, "~> 0.19", only: :dev, runtime: false}
     ]
   end
