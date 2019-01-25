@@ -12,8 +12,7 @@ defmodule Authex.Verifier do
          token <- Token.from_map(claims),
          :ok <- check_nbf(opts.time, token.nbf),
          :ok <- check_exp(opts.time, token.exp),
-         :ok <- check_blacklist(opts.blacklist, token.jti),
-         :ok <- check_banlist(opts.banlist, token.sub) do
+         :ok <- check_blacklist(opts.blacklist, token.jti) do
       {:ok, token}
     else
       error -> error
@@ -68,26 +67,9 @@ defmodule Authex.Verifier do
     {:error, :jti_unverified}
   end
 
-  defp check_banlist(false, _) do
-    :ok
-  end
-
-  defp check_banlist(banlist, sub) when is_atom(banlist) do
-    case Repo.exists?(banlist, sub) do
-      false -> :ok
-      true -> {:error, :banned}
-      :error -> {:error, :banlist_error}
-    end
-  end
-
-  defp check_banlist(_, _) do
-    {:error, :sub_unverified}
-  end
-
   defp build_options(auth, opts) do
     Enum.into(opts, %{
       time: :os.system_time(:seconds),
-      banlist: auth.config(:banlist, false),
       blacklist: auth.config(:blacklist, false)
     })
   end

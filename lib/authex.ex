@@ -49,8 +49,6 @@ defmodule Authex do
         # OPTIONAL
         # A blacklist repo, or false if disabled.
         blacklist: false,
-        # A banlist repo, or false if disabled.
-        banlist: false,
         # The default algorithm used to sign tokens.
         default_alg: :hs256,
         # The default iss claim used in tokens.
@@ -146,22 +144,20 @@ defmodule Authex do
   ## Repositories
 
   Usually, use of JSON web tokens requires some form of persistence to blacklist
-  tokens through their `:jti` claim. Authex also adds the ability to ban a
-  token through its `:sub` claim.
+  tokens through their `:jti` claim.
 
   To do this, we must create a repository. A repository is simply a module that
   adopts the `Authex.Repo` behaviour. For more information on creating
   repositories, please see the `Authex.Repo` documention.
 
-  Once we have created our blacklist or banlist repo, we define it in our config.
+  Once we have created our blacklist, we define it in our config.
 
       config :my_app, MyApp.Auth, [
-        blacklist: MyApp.Auth.Blacklist,
-        banlist: MyApp.Auth.Banlist
+        blacklist: MyApp.Auth.Blacklist
       ]
 
-  During the verification process used by `c:verify/2`, any blacklist or banlist
-  defined in our config will be checked against. Please be aware of any performance
+  During the verification process used by `c:verify/2`, any blacklist defined in
+  our config will be checked against. Please be aware of any performance
   penatly that may be incurred through use of database-backed repo's without use
   of caching.
 
@@ -187,7 +183,6 @@ defmodule Authex do
           {:alg, alg()}
           | {:time, integer()}
           | {:secret, binary()}
-          | {:banlist, Authex.Banlist.t()}
           | {:blacklist, Authex.Blacklist.t()}
 
   @type verifier_options :: [verifier_option()]
@@ -277,7 +272,6 @@ defmodule Authex do
   2. The current time is not before the `nbf` value.
   3. The current time is not after the `exp` value.
   4. The token `jti` is not included in the blacklist (if provided).
-  5. The token `sub` is not included in the banlist (if provided).
 
   If all checks pass, the token is deemed verified.
 
@@ -285,7 +279,6 @@ defmodule Authex do
     * `:time` - The base time (timestamp format) in which to use.
     * `:secret` - The secret key to verify the token with.
     * `:alg` - The algorithm to verify the token with
-    * `:banlist` - The banlist module to verify with.
     * `:blacklist` - The blacklist module to verify with.
 
   Any option provided would override the default set in the config.
@@ -388,48 +381,6 @@ defmodule Authex do
   Gets the current scopes from a `Plug.Conn`.
   """
   @callback current_scopes(Plug.Conn.t()) :: {:ok, list} | :error
-
-  @doc """
-  Checks whether a token subject is banned.
-
-  This uses the banlist repo defined in the auth config. The key is the `:sub`
-  key in the token.
-
-  Returns a boolean.
-
-  ## Example
-
-      MyApp.Auth.banned?(token)
-  """
-  @callback banned?(token :: Authex.Token.t()) :: boolean
-
-  @doc """
-  Bans a token subject.
-
-  This uses the banlist repo defined in the auth config. The key is the `:sub`
-  key in the token.
-
-  Returns `:ok` on success, or `:error` on failure.
-
-  ## Example
-
-      MyApp.Auth.ban(token)
-  """
-  @callback ban(token :: Authex.Token.t()) :: :ok | :error
-
-  @doc """
-  Unbans a token subject.
-
-  This uses the banlist repo defined in the auth config. The key is the `:sub`
-  key in the token.
-
-  Returns `:ok` on success, or `:error` on failure.
-
-  ## Example
-
-      MyApp.Auth.unban(token)
-  """
-  @callback unban(token :: Authex.Token.t()) :: :ok | :error
 
   @doc """
   Checks whether a token jti is blacklisted.
@@ -578,24 +529,6 @@ defmodule Authex do
       @impl Authex
       def current_scopes(_) do
         :error
-      end
-
-      @impl Authex
-      def banned?(%Authex.Token{sub: sub}) do
-        banlist = config(:banlist, false)
-        Authex.Repo.exists?(banlist, sub)
-      end
-
-      @impl Authex
-      def ban(%Authex.Token{sub: sub}) do
-        banlist = config(:banlist, false)
-        Authex.Repo.insert(banlist, sub)
-      end
-
-      @impl Authex
-      def unban(%Authex.Token{sub: sub}) do
-        banlist = config(:banlist, false)
-        Authex.Repo.delete(banlist, sub)
       end
 
       @impl Authex

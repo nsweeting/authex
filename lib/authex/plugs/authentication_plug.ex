@@ -39,17 +39,18 @@ defmodule Authex.AuthenticationPlug do
 
   @behaviour Plug
 
-  import Plug.Conn
+  import Plug.Conn, only: [get_req_header: 2, put_private: 3]
 
   @type option :: {:auth, Authex.t()} | {:unauthorized, module()}
-
   @type options :: [option()]
 
+  @doc false
   @impl Plug
   def init(opts \\ []) do
     verify_options(opts) && opts
   end
 
+  @doc false
   @impl Plug
   def call(conn, opts) do
     opts = build_options(opts)

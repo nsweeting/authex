@@ -8,13 +8,15 @@ defmodule Authex.UnauthorizedPlug do
 
   @behaviour Plug
 
-  import Plug.Conn
+  import Plug.Conn, only: [send_resp: 3, halt: 1]
 
+  @doc false
   @impl Plug
   def init(opts \\ []) do
     opts
   end
 
+  @doc false
   @impl Plug
   def call(conn, _options) do
     conn
