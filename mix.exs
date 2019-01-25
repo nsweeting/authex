@@ -1,7 +1,7 @@
 defmodule Authex.Mixfile do
   use Mix.Project
 
-  @version "0.3.3"
+  @version "1.0.0"
 
   def project do
     [
@@ -13,21 +13,17 @@ defmodule Authex.Mixfile do
       deps: deps(),
       description: description(),
       package: package(),
-
-      # Docs
       name: "Authex",
       docs: docs()
     ]
   end
 
-  # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      extra_applications: [:logger]
+      extra_applications: [:logger, :plug]
     ]
   end
 
-  # Specifies which paths to compile per environment.
   defp elixirc_paths(:test), do: ["lib", "test/support"]
   defp elixirc_paths(_), do: ["lib"]
 
@@ -56,22 +52,20 @@ defmodule Authex.Mixfile do
       source_url: "https://github.com/nsweeting/authex",
       groups_for_modules: [
         Plugs: [
-          Authex.AuthenticationPlug,
-          Authex.AuthorizationPlug,
-          Authex.UnauthorizedPlug,
-          Authex.ForbiddenPlug
+          Authex.Plug.Authentication,
+          Authex.Plug.Authorization,
+          Authex.Plug.Unauthorized,
+          Authex.Plug.Forbidden
         ]
       ]
     ]
   end
 
-  # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
       {:jose, "~> 1.8"},
-      {:uuid, "~> 1.1"},
-      {:plug, "~> 1.7"},
-      {:poison, "~> 3.1"},
+      {:jason, "~> 1.0", optional: true},
+      {:plug, "~> 1.0", optional: true},
       {:ex_doc, "~> 0.19", only: :dev, runtime: false}
     ]
   end

@@ -29,9 +29,9 @@ defmodule AuthexTest do
       assert %Token{jti: nil} = Auth.token(jti: false)
     end
 
-    test "uses a uuid hex as the default jti claim" do
+    test "uses a uuid as the default jti claim" do
       assert %Token{jti: jti} = Auth.token()
-      assert String.length(jti) == 32
+      assert String.length(jti) == 36
     end
 
     test "can set the scopes claim through the args or config" do
@@ -178,45 +178,6 @@ defmodule AuthexTest do
 
     test "will return an error if no serializer is set" do
       assert {:error, :no_serializer} = Auth.for_compact_token(%{id: 1, scopes: ["foo"]})
-    end
-  end
-
-  describe "banned?/1" do
-    test "returns false if not banned" do
-      save_config(banlist: Mocklist)
-      {:ok, pid} = Mocklist.start_link()
-      assert Auth.banned?(%Token{sub: 1}) == false
-      Process.exit(pid, :kill)
-    end
-
-    test "returns true if banned" do
-      save_config(banlist: Mocklist)
-      {:ok, pid} = Mocklist.start_link()
-      Auth.ban(%Token{sub: 1})
-      assert Auth.banned?(%Token{sub: 1}) == true
-      Process.exit(pid, :kill)
-    end
-  end
-
-  describe "ban/1" do
-    test "returns ok if banned" do
-      save_config(banlist: Mocklist)
-      {:ok, pid} = Mocklist.start_link()
-      assert Auth.ban(%Token{sub: 1}) == :ok
-      assert Auth.banned?(%Token{sub: 1}) == true
-      Process.exit(pid, :kill)
-    end
-  end
-
-  describe "unban/1" do
-    test "returns ok if unbanned" do
-      save_config(banlist: Mocklist)
-      {:ok, pid} = Mocklist.start_link()
-      assert Auth.ban(%Authex.Token{sub: 1}) == :ok
-      assert Auth.banned?(%Token{sub: 1}) == true
-      assert Auth.unban(%Token{sub: 1}) == :ok
-      assert Auth.banned?(%Token{sub: 1}) == false
-      Process.exit(pid, :kill)
     end
   end
 

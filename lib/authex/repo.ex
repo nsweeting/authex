@@ -2,11 +2,10 @@ defmodule Authex.Repo do
   @moduledoc """
   Defines a verification repo.
 
-  This allows for the creation of persistent storage for blacklists and banlists.
-  Blacklists are used to block usage of a token by its `:jti` key. Banlists are
-  used to block usage of a token by its `:sub` key.
+  This allows for the creation of persistent storage for blacklists. Blacklists
+  are used to block usage of a token by its `:jti` key.
 
-      defmodule MyApp.Auth.Banlist do
+      defmodule MyApp.Auth.Blacklist do
         use Authex.Repo
 
         @impl Authex.Repo
@@ -36,8 +35,8 @@ defmodule Authex.Repo do
       end
 
   Please be aware of the performance penalty that may be incurred if using blacklists
-  and banlists during the auth verification process. This will largely depend on
-  the storage medium used.
+  during the auth verification process. This will largely depend on the storage
+  medium used.
   """
 
   @type t :: module() | false
