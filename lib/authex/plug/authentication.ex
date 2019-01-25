@@ -74,7 +74,7 @@ if Code.ensure_loaded?(Plug) do
     end
 
     defp verify_token(compact, opts) do
-      auth = Map.get(opts, :auth)
+      auth = Map.get(opts, :with)
       apply(auth, :verify, [compact])
     end
 
@@ -89,7 +89,7 @@ if Code.ensure_loaded?(Plug) do
     end
 
     defp put_current_user(conn, token, opts) do
-      auth = Map.get(opts, :auth)
+      auth = Map.get(opts, :with)
 
       case apply(auth, :from_token, [token]) do
         {:ok, user} -> {:ok, put_private(conn, :authex_current_user, user)}

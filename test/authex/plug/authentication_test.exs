@@ -22,9 +22,11 @@ defmodule Authex.Plug.AuthenticationTest do
     end
 
     test "raises if the auth module is not present" do
-      assert_raise Authex.Error, "auth module missing", fn ->
-        Authentication.init()
-      end
+      assert_raise Authex.Error,
+                   "Auth module missing. Please pass an auth module using the :with key.",
+                   fn ->
+                     Authentication.init()
+                   end
     end
   end
 

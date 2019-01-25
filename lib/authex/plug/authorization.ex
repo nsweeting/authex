@@ -103,7 +103,7 @@ if Code.ensure_loaded?(Plug) do
     end
 
     defp fetch_current_scopes(conn, opts) do
-      auth = Map.get(opts, :auth)
+      auth = Map.get(opts, :with)
       apply(auth, :current_scopes, [conn])
     end
 
