@@ -62,18 +62,6 @@ defmodule Authex.AuthenticationPlugTest do
       Process.exit(pid, :kill)
     end
 
-    test "returns a plug with 401 status if sub is banned" do
-      {:ok, pid} = Mocklist.start_link()
-      save_config(secret: "foo", banlist: Mocklist)
-      token = Auth.token()
-      Auth.ban(token)
-      compact_token = Auth.sign(token)
-      opts = AuthenticationPlug.init(auth: Auth)
-      conn = conn(:get, "/") |> put_req_header("authorization", "Bearer #{compact_token}")
-      assert %{status: 401, state: :sent, halted: true} = AuthenticationPlug.call(conn, opts)
-      Process.exit(pid, :kill)
-    end
-
     test "returns a plug with no modifications if authorization is valid" do
       save_config(secret: "foo", serializer: Serializer)
       compact_token = Auth.token() |> Auth.sign()

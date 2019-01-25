@@ -181,45 +181,6 @@ defmodule AuthexTest do
     end
   end
 
-  describe "banned?/1" do
-    test "returns false if not banned" do
-      save_config(banlist: Mocklist)
-      {:ok, pid} = Mocklist.start_link()
-      assert Auth.banned?(%Token{sub: 1}) == false
-      Process.exit(pid, :kill)
-    end
-
-    test "returns true if banned" do
-      save_config(banlist: Mocklist)
-      {:ok, pid} = Mocklist.start_link()
-      Auth.ban(%Token{sub: 1})
-      assert Auth.banned?(%Token{sub: 1}) == true
-      Process.exit(pid, :kill)
-    end
-  end
-
-  describe "ban/1" do
-    test "returns ok if banned" do
-      save_config(banlist: Mocklist)
-      {:ok, pid} = Mocklist.start_link()
-      assert Auth.ban(%Token{sub: 1}) == :ok
-      assert Auth.banned?(%Token{sub: 1}) == true
-      Process.exit(pid, :kill)
-    end
-  end
-
-  describe "unban/1" do
-    test "returns ok if unbanned" do
-      save_config(banlist: Mocklist)
-      {:ok, pid} = Mocklist.start_link()
-      assert Auth.ban(%Authex.Token{sub: 1}) == :ok
-      assert Auth.banned?(%Token{sub: 1}) == true
-      assert Auth.unban(%Token{sub: 1}) == :ok
-      assert Auth.banned?(%Token{sub: 1}) == false
-      Process.exit(pid, :kill)
-    end
-  end
-
   describe "blacklisted?/1" do
     test "returns false if not blacklisted" do
       save_config(blacklist: Mocklist)
