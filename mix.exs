@@ -1,7 +1,7 @@
 defmodule Authex.Mixfile do
   use Mix.Project
 
-  @version "0.3.3"
+  @version "1.0.0"
 
   def project do
     [
@@ -69,7 +69,7 @@ defmodule Authex.Mixfile do
   defp deps do
     [
       {:jose, "~> 1.8"},
-      {:jason, "~> 1.0"},
+      {:jason, "~> 1.0", optional: true},
       {:plug, "~> 1.0", optional: true},
       {:ex_doc, "~> 0.19", only: :dev, runtime: false}
     ]
