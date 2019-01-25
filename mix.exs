@@ -69,7 +69,7 @@ defmodule Authex.Mixfile do
   defp deps do
     [
       {:jose, "~> 1.8"},
-      {:poison, "~> 3.1"},
+      {:jason, "~> 1.0"},
       {:plug, "~> 1.0", optional: true},
       {:ex_doc, "~> 0.19", only: :dev, runtime: false}
     ]
