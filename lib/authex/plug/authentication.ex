@@ -11,7 +11,7 @@ if Code.ensure_loaded?(Plug) do
         defmodule MyAppWeb.MyController do
           use MyAppWeb, :controller
 
-          plug Authex.Plug.Authentication, auth: MyApp.Auth
+          plug Authex.Plug.Authentication, with: MyApp.Auth
 
           def show(conn, _params) do
             with {:ok, %{id: id}} <- MyApp.Auth.current_user(conn),
@@ -42,7 +42,7 @@ if Code.ensure_loaded?(Plug) do
 
     import Plug.Conn, only: [get_req_header: 2, put_private: 3]
 
-    @type option :: {:auth, Authex.t()} | {:unauthorized, module()}
+    @type option :: {:with, Authex.t()} | {:unauthorized, module()}
     @type options :: [option()]
 
     @doc false
@@ -74,7 +74,7 @@ if Code.ensure_loaded?(Plug) do
     end
 
     defp verify_token(compact, opts) do
-      auth = Map.get(opts, :auth)
+      auth = Map.get(opts, :with)
       apply(auth, :verify, [compact])
     end
 
@@ -89,7 +89,7 @@ if Code.ensure_loaded?(Plug) do
     end
 
     defp put_current_user(conn, token, opts) do
-      auth = Map.get(opts, :auth)
+      auth = Map.get(opts, :with)
 
       case apply(auth, :from_token, [token]) do
         {:ok, user} -> {:ok, put_private(conn, :authex_current_user, user)}
@@ -104,7 +104,7 @@ if Code.ensure_loaded?(Plug) do
     end
 
     defp build_options(opts) do
-      auth = Keyword.get(opts, :auth)
+      auth = Keyword.get(opts, :with)
 
       Enum.into(opts, %{
         unauthorized: auth.config(:unauthorized, Authex.Plug.Unauthorized)
@@ -112,7 +112,8 @@ if Code.ensure_loaded?(Plug) do
     end
 
     defp verify_options(opts) do
-      Keyword.has_key?(opts, :auth) || raise Authex.Error, "auth module missing"
+      Keyword.has_key?(opts, :with) ||
+        raise Authex.Error, "Auth module missing. Please pass an auth module using the :with key."
     end
   end
 end
