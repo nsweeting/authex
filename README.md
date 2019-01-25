@@ -18,7 +18,7 @@ def deps do
   [
     {:authex, "~> 1.0"},
     {:jason, "~> 1.0"},
-    {:plug, "~> 1.0}
+    {:plug, "~> 1.0"}
   ]
 end
 ```
