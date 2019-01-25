@@ -166,7 +166,7 @@ defmodule Authex.Token do
 
   defp build_claims(auth, claims) do
     Enum.into(claims, %{
-      jti: auth.config(:default_jti, {UUID, :uuid4, [:hex]}),
+      jti: auth.config(:default_jti, {Authex.UUID, :generate, []}),
       scopes: auth.config(:default_scopes, []),
       sub: auth.config(:default_sub),
       aud: auth.config(:default_aud),

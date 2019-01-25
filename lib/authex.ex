@@ -58,7 +58,7 @@ defmodule Authex do
         # The default time to live for tokens in seconds.
         default_ttl: 3600,
         # The default module, function, and arg used to generate the jti claim.
-        jti_mfa: {UUID, :uuid4, [:hex]}
+        jti_mfa: {Authex.UUID, :generate, []}
         # The plug called when an unauthorized status is determined.
         unauthorized: Authex.UnauthorizedPlug
         # The plug called when an forbidden status is determined.

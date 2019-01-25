@@ -29,9 +29,9 @@ defmodule AuthexTest do
       assert %Token{jti: nil} = Auth.token(jti: false)
     end
 
-    test "uses a uuid hex as the default jti claim" do
+    test "uses a uuid as the default jti claim" do
       assert %Token{jti: jti} = Auth.token()
-      assert String.length(jti) == 32
+      assert String.length(jti) == 36
     end
 
     test "can set the scopes claim through the args or config" do
