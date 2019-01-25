@@ -1,5 +1,5 @@
 if Code.ensure_loaded?(Plug) do
-  defmodule Authex.AuthenticationPlug do
+  defmodule Authex.Plug.Authentication do
     @moduledoc """
     A plug to handle authentication.
 
@@ -11,7 +11,7 @@ if Code.ensure_loaded?(Plug) do
         defmodule MyAppWeb.MyController do
           use MyAppWeb, :controller
 
-          plug Authex.AuthenticationPlug, auth: MyApp.Auth
+          plug Authex.Plug.Authentication, auth: MyApp.Auth
 
           def show(conn, _params) do
             with {:ok, %{id: id}} <- MyApp.Auth.current_user(conn),
@@ -28,13 +28,13 @@ if Code.ensure_loaded?(Plug) do
     We can then access our current user from the conn using the `c:Authex.current_user/1`
     callback.
 
-    By default, if authentication fails, the plug sends the conn to the `Authex.UnauthorizedPlug`
+    By default, if authentication fails, the plug sends the conn to the `Authex.Plug.Unauthorized`
     plug. This plug will put a `401` status into the conn with the body `"Unauthorized"`.
-    We can configure our own unauthorized plug by passing it as an option to the `Authex.AuthenticationPlug`
+    We can configure our own unauthorized plug by passing it as an option to the `Authex.Plug.Authentication`
     plug or through our auth module config.
 
         config :my_app, MyApp.Auth, [
-          unauthorized: MyApp.UnauthorizedPlug
+          unauthorized: MyApp.Plug.Unauthorized
         ]
     """
 
@@ -107,7 +107,7 @@ if Code.ensure_loaded?(Plug) do
       auth = Keyword.get(opts, :auth)
 
       Enum.into(opts, %{
-        unauthorized: auth.config(:unauthorized, Authex.UnauthorizedPlug)
+        unauthorized: auth.config(:unauthorized, Authex.Plug.Unauthorized)
       })
     end
 

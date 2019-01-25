@@ -1,9 +1,9 @@
 if Code.ensure_loaded?(Plug) do
-  defmodule Authex.UnauthorizedPlug do
+  defmodule Authex.Plug.Unauthorized do
     @moduledoc """
     A plug to mark the status as unauthorized.
 
-    This plug is the default used when authentication fails with `Authex.AuthenticationPlug`.
+    This plug is the default used when authentication fails with `Authex.Plug.Authentication`.
     It will put a `401` status into the conn with the body `"Unauthorized"`.
     """
 

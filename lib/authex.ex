@@ -60,9 +60,9 @@ defmodule Authex do
         # The default module, function, and arg used to generate the jti claim.
         jti_mfa: {Authex.UUID, :generate, []}
         # The plug called when an unauthorized status is determined.
-        unauthorized: Authex.UnauthorizedPlug
+        unauthorized: Authex.Plug.Unauthorized,
         # The plug called when an forbidden status is determined.
-        forbidden: Authex.ForbiddenPlug
+        forbidden: Authex.Plug.Forbidden
       ]
 
   ## Tokens
@@ -166,10 +166,10 @@ defmodule Authex do
   Authex provides a number of plugs to handle the typical authentication and
   authorization process required by an API using your auth module.
 
-  For more information on handling authentication, please see the `Authex.AuthenticationPlug`
+  For more information on handling authentication, please see the `Authex.Plug.Authentication`
   documention.
 
-  For more information on handling authorization, please see the `Authex.AuthorizationPlug`
+  For more information on handling authorization, please see the `Authex.Plug.Authorization`
   documention.
   """
 

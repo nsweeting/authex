@@ -56,10 +56,10 @@ defmodule Authex.Mixfile do
       source_url: "https://github.com/nsweeting/authex",
       groups_for_modules: [
         Plugs: [
-          Authex.AuthenticationPlug,
-          Authex.AuthorizationPlug,
-          Authex.UnauthorizedPlug,
-          Authex.ForbiddenPlug
+          Authex.Plug.Authentication,
+          Authex.Plug.Authorization,
+          Authex.Plug.Unauthorized,
+          Authex.Plug.Forbidden
         ]
       ]
     ]

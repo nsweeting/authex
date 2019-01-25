@@ -1,9 +1,9 @@
 if Code.ensure_loaded?(Plug) do
-  defmodule Authex.ForbiddenPlug do
+  defmodule Authex.Plug.Forbidden do
     @moduledoc """
     A plug to mark the status as forbidden.
 
-    This plug is the default used when authorization fails with `Authex.AuthorizationPlug`.
+    This plug is the default used when authorization fails with `Authex.Plug.Authorization`.
     It will put a `403` status into the conn with the body `"Forbidden"`.
     """
     @behaviour Plug
