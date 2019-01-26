@@ -174,19 +174,15 @@ defmodule Authex do
   """
 
   @type alg :: :hs256 | :hs384 | :hs512
-
   @type signer_option :: {:alg, alg()} | {:secret, binary()}
-
   @type signer_options :: [signer_option()]
-
   @type verifier_option ::
           {:alg, alg()}
           | {:time, integer()}
           | {:secret, binary()}
           | {:blacklist, Authex.Blacklist.t()}
-
   @type verifier_options :: [verifier_option()]
-
+  @type conn :: %{__struct__: Plug.Conn}
   @type t :: module()
 
   @doc """
@@ -374,13 +370,24 @@ defmodule Authex do
 
   @doc """
   Gets the current user from a `Plug.Conn`.
+
+  Returns `{:ok, user}` or `:error`.
   """
-  @callback current_user(Plug.Conn.t()) :: {:ok, term()} | :error
+  @callback current_user(conn()) :: {:ok, term()} | :error
 
   @doc """
   Gets the current scopes from a `Plug.Conn`.
+
+  Returns `{:ok, scopes}` or `:error`.
   """
-  @callback current_scopes(Plug.Conn.t()) :: {:ok, list} | :error
+  @callback current_scopes(conn()) :: {:ok, list()} | :error
+
+  @doc """
+  Gets the current token from a `Plug.Conn`.
+
+  Returns `{:ok, token}` or `:error`.
+  """
+  @callback current_token(conn()) :: {:ok, Authex.Token.t()} | :error
 
   @doc """
   Checks whether a token jti is blacklisted.
@@ -514,20 +521,23 @@ defmodule Authex do
         Map.fetch(private, :authex_current_user)
       end
 
-      @impl Authex
       def current_user(_) do
         :error
       end
 
       @impl Authex
-      def current_scopes(%{private: private}) do
-        with {:ok, token} <- Map.fetch(private, :authex_token) do
+      def current_scopes(conn) do
+        with {:ok, token} <- current_token(conn) do
           Map.fetch(token, :scopes)
         end
       end
 
       @impl Authex
-      def current_scopes(_) do
+      def current_token(%{private: private}) do
+        Map.fetch(private, :authex_token)
+      end
+
+      def current_token(_) do
         :error
       end
 
