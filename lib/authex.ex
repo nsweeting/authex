@@ -510,7 +510,7 @@ defmodule Authex do
       end
 
       @impl Authex
-      def current_user(%Plug.Conn{private: private}) do
+      def current_user(%{private: private}) do
         Map.fetch(private, :authex_current_user)
       end
 
@@ -520,7 +520,7 @@ defmodule Authex do
       end
 
       @impl Authex
-      def current_scopes(%Plug.Conn{private: private}) do
+      def current_scopes(%{private: private}) do
         with {:ok, token} <- Map.fetch(private, :authex_token) do
           Map.fetch(token, :scopes)
         end
