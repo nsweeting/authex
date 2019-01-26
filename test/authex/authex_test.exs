@@ -181,6 +181,55 @@ defmodule AuthexTest do
     end
   end
 
+  describe "current_user/1" do
+    test "returns the current user set in the :authex_current_user key of a Plug.Conn" do
+      conn = %Plug.Conn{private: %{authex_current_user: "foo"}}
+      assert {:ok, "foo"} = Auth.current_user(conn)
+    end
+
+    test "returns an error if :authex_current_user key of a Plug.Conn doesnt exist" do
+      conn = %Plug.Conn{private: %{}}
+      assert :error = Auth.current_user(conn)
+    end
+
+    test "returns an error if passed something that does not have a private key" do
+      assert :error = Auth.current_user(%{})
+    end
+  end
+
+  describe "current_scopes/1" do
+    test "returns the current scopes set in the :authex_token key of a Plug.Conn" do
+      conn = %Plug.Conn{private: %{authex_token: %Authex.Token{scopes: ["foo"]}}}
+      assert {:ok, ["foo"]} = Auth.current_scopes(conn)
+    end
+
+    test "returns an error if :authex_current_scopes key of a Plug.Conn doesnt exist" do
+      conn = %Plug.Conn{private: %{}}
+      assert :error = Auth.current_scopes(conn)
+    end
+
+    test "returns an error if passed something that does not have a private key" do
+      assert :error = Auth.current_scopes(%{})
+    end
+  end
+
+  describe "current_token/1" do
+    test "returns the current token set in the :authex_token key of a Plug.Conn" do
+      token = %Authex.Token{}
+      conn = %Plug.Conn{private: %{authex_token: token}}
+      assert {:ok, ^token} = Auth.current_token(conn)
+    end
+
+    test "returns an error if :authex_token key of a Plug.Conn doesnt exist" do
+      conn = %Plug.Conn{private: %{}}
+      assert :error = Auth.current_token(conn)
+    end
+
+    test "returns an error if passed something that does not have a private key" do
+      assert :error = Auth.current_token(%{})
+    end
+  end
+
   describe "blacklisted?/1" do
     test "returns false if not blacklisted" do
       save_config(blacklist: Mocklist)

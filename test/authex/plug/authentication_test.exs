@@ -72,7 +72,7 @@ defmodule Authex.Plug.AuthenticationTest do
       assert %{status: nil, state: :unset, halted: false} = Authentication.call(conn, opts)
     end
 
-    test "sets the current user private key" do
+    test "sets the :authex_current_user private key" do
       save_config(secret: "foo", serializer: Serializer)
       compact_token = Auth.token() |> Auth.sign()
       opts = Authentication.init(with: Auth)
@@ -81,13 +81,13 @@ defmodule Authex.Plug.AuthenticationTest do
       assert {:ok, %{id: nil, scopes: []}} = Auth.current_user(conn)
     end
 
-    test "sets the token private key" do
+    test "sets the :authex_token private key" do
       save_config(secret: "foo", serializer: Serializer)
       compact_token = Auth.token() |> Auth.sign()
       opts = Authentication.init(with: Auth)
       conn = conn(:get, "/") |> put_req_header("authorization", "Bearer #{compact_token}")
       conn = Authentication.call(conn, opts)
-      assert {:ok, []} = Auth.current_scopes(conn)
+      assert {:ok, %Authex.Token{}} = Auth.current_token(conn)
     end
   end
 end

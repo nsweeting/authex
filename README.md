@@ -62,7 +62,7 @@ compact_token = MyApp.Auth.sign(token)
 ```
 
 Please check out the documentation for more advanced features like serializers,
-repositories and integration with plugs.
+repositories and integration with plug.
 
 ## Features
 

@@ -58,7 +58,7 @@ defmodule Authex do
         # The default time to live for tokens in seconds.
         default_ttl: 3600,
         # The default module, function, and arg used to generate the jti claim.
-        jti_mfa: {Authex.UUID, :generate, []}
+        jti_mfa: {Authex.UUID, :generate, []},
         # The plug called when an unauthorized status is determined.
         unauthorized: Authex.Plug.Unauthorized,
         # The plug called when an forbidden status is determined.
@@ -70,7 +70,7 @@ defmodule Authex do
   At the heart of Authex is the `Authex.Token` struct. This struct is simply
   a wrapper around the typical JWT claims. The only additional item is the
   `:scopes` and `:meta` key. There are 3 base actions required for these tokens -
-  creation, signing, and verification.
+  creating, signing, and verification.
 
   #### Creating
 
@@ -111,7 +111,7 @@ defmodule Authex do
 
   To do this, we must create a serializer. A serializer is simply a module that
   adopts the `Authex.Serializer` behaviour. For more information on creating
-  serializers, please see the `Authex.Serializer` documention.
+  serializers, please see the `Authex.Serializer` documentation.
 
   Once we have created our serializer, we define it in our config.
 
@@ -148,7 +148,7 @@ defmodule Authex do
 
   To do this, we must create a repository. A repository is simply a module that
   adopts the `Authex.Repo` behaviour. For more information on creating
-  repositories, please see the `Authex.Repo` documention.
+  repositories, please see the `Authex.Repo` documentation.
 
   Once we have created our blacklist, we define it in our config.
 
@@ -167,26 +167,22 @@ defmodule Authex do
   authorization process required by an API using your auth module.
 
   For more information on handling authentication, please see the `Authex.Plug.Authentication`
-  documention.
+  documentation.
 
   For more information on handling authorization, please see the `Authex.Plug.Authorization`
-  documention.
+  documentation.
   """
 
   @type alg :: :hs256 | :hs384 | :hs512
-
   @type signer_option :: {:alg, alg()} | {:secret, binary()}
-
   @type signer_options :: [signer_option()]
-
   @type verifier_option ::
           {:alg, alg()}
           | {:time, integer()}
           | {:secret, binary()}
           | {:blacklist, Authex.Blacklist.t()}
-
   @type verifier_options :: [verifier_option()]
-
+  @type conn :: %{__struct__: Plug.Conn}
   @type t :: module()
 
   @doc """
@@ -209,7 +205,7 @@ defmodule Authex do
   This should be used to dynamically set any config during runtime - such as the
   secret key used to sign tokens with.
 
-  Returns `{:ok, config}`
+  Returns `{:ok, config}`.
 
   ## Example
 
@@ -228,7 +224,7 @@ defmodule Authex do
   A token is a struct that wraps the typical JWT claims but also adds a couple
   new fields. Please see the `Authex.Token` documentation for more details.
 
-  Returns an `Authex.Token` struct,
+  Returns an `Authex.Token` struct.
 
   ## Options
     * `:time` - The base time (timestamp format) in which to use.
@@ -283,7 +279,7 @@ defmodule Authex do
 
   Any option provided would override the default set in the config.
 
-  Returns `{:ok, token}` or `{:error, reason}`
+  Returns `{:ok, token}` or `{:error, reason}`.
 
   ## Example
 
@@ -300,7 +296,7 @@ defmodule Authex do
   Please see the `Authex.Serializer` documentation for more details on implementing
   a serializer.
 
-  Returns `{:ok, resource}` or `{:error, reason}`
+  Returns `{:ok, resource}` or `{:error, reason}`.
 
   ## Options
 
@@ -319,7 +315,7 @@ defmodule Authex do
   Once verified, this invokes `c:from_token/2` with the verified token. Please see
   `c:from_token/2` for additional details.
 
-  Returns `{:ok, resource}` or `{:error, reason}`
+  Returns `{:ok, resource}` or `{:error, reason}`.
 
   ## Options
 
@@ -343,7 +339,7 @@ defmodule Authex do
   Please see the `Authex.Serializer` documentation for more details on implementing
   a serializer.
 
-  Returns `{:ok, token}` or `{:error, reason}`
+  Returns `{:ok, token}` or `{:error, reason}`.
 
   ## Options
 
@@ -374,13 +370,24 @@ defmodule Authex do
 
   @doc """
   Gets the current user from a `Plug.Conn`.
+
+  Returns `{:ok, user}` or `:error`.
   """
-  @callback current_user(Plug.Conn.t()) :: {:ok, term()} | :error
+  @callback current_user(conn()) :: {:ok, term()} | :error
 
   @doc """
   Gets the current scopes from a `Plug.Conn`.
+
+  Returns `{:ok, scopes}` or `:error`.
   """
-  @callback current_scopes(Plug.Conn.t()) :: {:ok, list} | :error
+  @callback current_scopes(conn()) :: {:ok, list()} | :error
+
+  @doc """
+  Gets the current token from a `Plug.Conn`.
+
+  Returns `{:ok, token}` or `:error`.
+  """
+  @callback current_token(conn()) :: {:ok, Authex.Token.t()} | :error
 
   @doc """
   Checks whether a token jti is blacklisted.
@@ -510,24 +517,27 @@ defmodule Authex do
       end
 
       @impl Authex
-      def current_user(%Plug.Conn{private: private}) do
+      def current_user(%{private: private}) do
         Map.fetch(private, :authex_current_user)
       end
 
-      @impl Authex
       def current_user(_) do
         :error
       end
 
       @impl Authex
-      def current_scopes(%Plug.Conn{private: private}) do
-        with {:ok, token} <- Map.fetch(private, :authex_token) do
+      def current_scopes(conn) do
+        with {:ok, token} <- current_token(conn) do
           Map.fetch(token, :scopes)
         end
       end
 
       @impl Authex
-      def current_scopes(_) do
+      def current_token(%{private: private}) do
+        Map.fetch(private, :authex_token)
+      end
+
+      def current_token(_) do
         :error
       end
 
@@ -540,7 +550,7 @@ defmodule Authex do
       @impl Authex
       def blacklist(%Authex.Token{jti: jti}) do
         blacklist = config(:blacklist, false)
-        ttl = Authex.Repo.insert(blacklist, jti)
+        Authex.Repo.insert(blacklist, jti)
       end
 
       @impl Authex
