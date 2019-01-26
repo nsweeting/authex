@@ -10,7 +10,8 @@ defmodule Authex.Serializer do
 
         @impl Authex.Serializer
         def for_token(user, opts) do
-          {:ok, MyApp.Auth.token([sub: user.id, scopes: user.scopes], opts)}
+          token = MyApp.Auth.token([sub: user.id, scopes: user.scopes], opts)
+          {:ok, token}
         end
 
         @impl Authex.Serializer
@@ -19,7 +20,7 @@ defmodule Authex.Serializer do
         end
       end
 
-  With our serilializer defined, we must add callbacks for `c:for_token/2` to
+  With our serializer defined, we must add callbacks for `c:for_token/2` to
   convert our user into a token, as well as for `c:from_token/2` to convert a
   token into a user
   """
@@ -27,7 +28,7 @@ defmodule Authex.Serializer do
   @doc """
   Converts a resource into an `Authex.Token` struct.
 
-  Must return `{:ok, token}` on sucess
+  Must return `{:ok, token}` on success.
 
   ## Options
     * `:time` - The base time (timestamp format) in which to use.
@@ -39,6 +40,8 @@ defmodule Authex.Serializer do
 
   @doc """
   Converts an `Authex.Token` struct into a resource.
+
+  Must return `{:ok, resource}` on success.
 
   ## Options
 
