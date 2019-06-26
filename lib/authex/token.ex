@@ -3,7 +3,7 @@ defmodule Authex.Token do
   A struct wrapper for token claims.
 
   Typically, we shouldnt need to directly interact with this module. Rather, we
-  should use the `c:Authex.token/2` callback defined in our auth module.
+  should use the `Authex.token/3` function.
   """
 
   alias Authex.Token
@@ -29,7 +29,6 @@ defmodule Authex.Token do
           scopes: list,
           meta: map
         }
-
   @type claim ::
           {:sub, binary | integer}
           | {:aud, binary}
@@ -37,15 +36,11 @@ defmodule Authex.Token do
           | {:jti, binary}
           | {:scopes, list}
           | {:meta, map}
-
   @type claims :: [claim]
-
   @type option ::
           {:time, integer}
           | {:ttl, integer}
-
   @type options :: [option]
-
   @type compact :: binary
 
   @doc """
@@ -59,9 +54,9 @@ defmodule Authex.Token do
 
       Authex.Token.new(MyApp.Auth, [sub: 1], [ttl: 60])
   """
-  def new(auth, claims \\ [], opts \\ []) do
-    claims = build_claims(auth, claims)
-    opts = build_options(auth, opts)
+  def new(module, claims \\ [], opts \\ []) do
+    claims = build_claims(module, claims)
+    opts = build_options(module, opts)
 
     %Token{}
     |> put_iat(opts.time)
@@ -164,20 +159,20 @@ defmodule Authex.Token do
     false
   end
 
-  defp build_claims(auth, claims) do
+  defp build_claims(module, claims) do
     Enum.into(claims, %{
-      jti: auth.config(:default_jti, {Authex.UUID, :generate, []}),
-      scopes: auth.config(:default_scopes, []),
-      sub: auth.config(:default_sub),
-      aud: auth.config(:default_aud),
-      iss: auth.config(:default_iss),
-      meta: auth.config(:default_meta, %{})
+      jti: Authex.config(module, :default_jti, {Authex.UUID, :generate, []}),
+      scopes: Authex.config(module, :default_scopes, []),
+      sub: Authex.config(module, :default_sub),
+      aud: Authex.config(module, :default_aud),
+      iss: Authex.config(module, :default_iss),
+      meta: Authex.config(module, :default_meta, %{})
     })
   end
 
-  defp build_options(auth, opts) do
+  defp build_options(module, opts) do
     Enum.into(opts, %{
-      ttl: auth.config(:default_ttl, 3600),
+      ttl: Authex.config(module, :default_ttl, 3600),
       time: :os.system_time(:seconds)
     })
   end

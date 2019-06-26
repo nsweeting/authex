@@ -6,17 +6,7 @@ defmodule Authex.Repo do
   are used to block usage of a token by its `:jti` key.
 
       defmodule MyApp.Auth.Blacklist do
-        use Authex.Repo
-
-        @impl Authex.Repo
-        def start_link(config) do
-          # Start the repo process if required.
-        end
-
-        @impl Authex.Repo
-        def init(config) do
-          # Perform any dynamic config.
-        end
+        @behaviour Authex.Repo
 
         @impl Authex.Repo
         def exists?(key) do
@@ -40,27 +30,7 @@ defmodule Authex.Repo do
   """
 
   @type t :: module() | false
-
   @type key :: binary() | integer()
-
-  @doc """
-  Starts the repo process.
-
-  Returns `{:ok, pid}` on success.
-
-  Returns `{:error, {:already_started, pid}}` if the repo process is already
-  started or `{:error, term}` in case anything else goes wrong.
-  """
-  @callback start_link(config :: Keyword.t()) :: GenServer.on_start()
-
-  @doc """
-  A callback executed when the repo process starts.
-
-  This should be used to dynamically set any config during runtime.
-
-  Returns `{:ok, config}`
-  """
-  @callback init(config :: Keyword.t()) :: {:ok, Keyword.t()}
 
   @doc """
   Checks if a binary key exists in the repo.
@@ -82,39 +52,6 @@ defmodule Authex.Repo do
   Returns `:ok` on success, or `:error` on error.
   """
   @callback delete(key()) :: :ok | :error
-
-  defmacro __using__(_) do
-    quote location: :keep do
-      @behaviour Authex.Repo
-
-      @impl Authex.Repo
-      def start_link(_config) do
-        :ignore
-      end
-
-      @impl Authex.Repo
-      def init(config) do
-        {:ok, config}
-      end
-
-      @impl Authex.Repo
-      def exists?(_key) do
-        :error
-      end
-
-      @impl Authex.Repo
-      def insert(_key) do
-        :error
-      end
-
-      @impl Authex.Repo
-      def delete(_key) do
-        :error
-      end
-
-      defoverridable Authex.Repo
-    end
-  end
 
   @doc false
   @spec exists?(repo :: Authex.Repo.t(), key()) :: boolean() | :error

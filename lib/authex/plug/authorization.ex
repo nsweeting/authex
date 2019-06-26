@@ -3,9 +3,7 @@ if Code.ensure_loaded?(Plug) do
     @moduledoc """
     A plug to handle authorization.
 
-    This plug must be passed an auth module in which to authorize with. Otherwise,
-    it will raise an `Authex.Error`. The plug must also only be used after the
-    `Authex.Plug.Authentication` has been used.
+    The plug must also only be used after the `Authex.Plug.Authentication` has been used.
 
     With it, we can easily authorize a Phoenix controller:
 
@@ -13,10 +11,10 @@ if Code.ensure_loaded?(Plug) do
           use MyAppWeb, :controller
 
           plug Authex.Plug.Authentication, with: MyApp.Auth
-          plug Authex.Plug.Authorization, with: MyApp.Auth, permits: ["user", "admin"]
+          plug Authex.Plug.Authorization, permits: ["user", "admin"]
 
           def show(conn, _params) do
-            with {:ok, %{id: id}} <- MyApp.Auth.current_user(conn),
+            with {:ok, %{id: id}} <- Authex.current_resource(conn),
                 {:ok, user} <- MyApp.Users.get(id)
             do
               render(conn, "show.json", user: user)
@@ -24,7 +22,7 @@ if Code.ensure_loaded?(Plug) do
           end
         end
 
-    The plug checks the scopes of the token and compares them to the "permits" passed
+    The plug checks the scopes of the token and compares them to the `:permits` passed
     to the plug. Authorization works by combining the "permits" with the "type" of
     request that is being made.
 
@@ -46,47 +44,37 @@ if Code.ensure_loaded?(Plug) do
 
     By default, if authorization fails, the plug sends the conn to the `Authex.Plug.Forbidden`
     plug. This plug will put a `403` status into the conn with the body `"Forbidden"`.
-    We can configure our own forbidden plug by passing it as an option to the
-    `Authex.Plug.Authorization` plug or through our config.
+    We can configure our own forbidden plug by passing it as an option to this plug.
 
-        config :my_app, MyApp.Auth, [
-          forbidden: MyApp.Plug.Forbidden
-        ]
+    ## Options
+
+      * `:forbidden` - The plug to call when the scopes are invalid - defaults to `Authex.Plug.Forbidden`.
+      * `:permits` - A list of permits that the token scopes must have at least one of.
     """
 
     @behaviour Plug
 
     import Plug.Conn, only: [put_private: 3]
 
-    @type option :: {:with, Authex.t()} | {:forbidden, module()}
+    @type option :: {:forbidden, module()} | {:permits, [binary()]}
     @type options :: [option()]
 
     @doc false
     @impl Plug
     def init(opts \\ []) do
-      verify_options(opts) && opts
+      build_options(opts)
     end
 
     @doc false
     @impl Plug
     def call(conn, opts) do
-      opts = build_options(opts)
-
-      with {:ok, permits} <- fetch_permits(opts),
-           {:ok, action} <- fetch_action(conn),
-           {:ok, scopes} <- fetch_current_scopes(conn, opts),
-           {:ok, current_scope} <- verify_scope(permits, action, scopes),
-           {:ok, conn} <- assign_current_scope(conn, current_scope) do
+      with {:ok, action} <- fetch_action(conn),
+           {:ok, scopes} <- fetch_current_scopes(conn),
+           {:ok, scope} <- verify_scope(opts, action, scopes),
+           {:ok, conn} <- assign_scope(conn, scope) do
         conn
       else
         _ -> forbidden(conn, opts)
-      end
-    end
-
-    defp fetch_permits(opts) do
-      case Map.get(opts, :permits) do
-        permits when is_list(permits) -> {:ok, permits}
-        false -> :error
       end
     end
 
@@ -102,14 +90,13 @@ if Code.ensure_loaded?(Plug) do
       end
     end
 
-    defp fetch_current_scopes(conn, opts) do
-      auth = Map.get(opts, :with)
-      apply(auth, :current_scopes, [conn])
+    defp fetch_current_scopes(conn) do
+      Authex.current_scopes(conn)
     end
 
-    defp verify_scope(permits, action, scopes) do
+    defp verify_scope(opts, action, scopes) do
       current_scopes =
-        Enum.map(permits, fn permit ->
+        Enum.map(opts.permits, fn permit ->
           permit <> "/" <> action
         end)
 
@@ -119,27 +106,20 @@ if Code.ensure_loaded?(Plug) do
       end
     end
 
-    defp assign_current_scope(conn, current_scope) do
-      {:ok, put_private(conn, :authex_current_scope, current_scope)}
+    defp assign_scope(conn, scope) do
+      {:ok, put_private(conn, :authex_scope, scope)}
     end
 
     defp forbidden(conn, opts) do
-      handler = Map.get(opts, :forbidden)
-      apply(handler, :call, [conn, []])
+      opts = apply(opts.forbidden, :init, [opts])
+      apply(opts.forbidden, :call, [conn, opts])
     end
 
     defp build_options(opts) do
-      auth = Keyword.get(opts, :with)
-
-      Enum.into(opts, %{
-        forbidden: auth.config(:forbidden, Authex.Plug.Forbidden),
-        permits: []
-      })
-    end
-
-    defp verify_options(opts) do
-      Keyword.has_key?(opts, :with) ||
-        raise Authex.Error, "Auth module missing. Please pass an auth module using the :with key."
+      %{
+        forbidden: Keyword.get(opts, :forbidden, Authex.Plug.Forbidden),
+        permits: Keyword.get(opts, :permits, [])
+      }
     end
   end
 end

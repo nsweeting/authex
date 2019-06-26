@@ -16,7 +16,7 @@ Finally, if you wish to use any of the plug functionality, make sure to add the 
 ```elixir
 def deps do
   [
-    {:authex, "~> 1.0"},
+    {:authex, "~> 2.0"},
     {:jason, "~> 1.0"},
     {:plug, "~> 1.0"}
   ]
@@ -33,14 +33,37 @@ To get started, we must define our auth module:
 
 ```elixir
 defmodule MyApp.Auth do
-  use Authex, otp_app: :my_app
+  use Authex
 
-  # Use the runtime init callback to dynamically set our secret.
-  def init(config) do
-    secret = System.get_env("AUTH_SECRET") || "secret"
-    config = Keyword.put(config, :secret, secret)
+  def start_link(opts \\\\ []) do
+    Authex.start_link(__MODULE__, opts, name: __MODULE__)
+  end
 
-    {:ok, config}
+  # Callbacks
+
+  @impl Authex
+  def init(opts) do
+    # Add any configuration listed in Authex.start_link/3
+
+    secret = System.get_env("AUTH_SECRET") || "foobar"
+    opts = Keyword.put(opts, :secret, secret)
+
+    {:ok, opts}
+  end
+
+  @impl Authex
+  def handle_for_token(%MyApp.User{} = resource, opts) do
+    {:ok, [sub: resource.id, scopes: resource.scopes], opts}
+  end
+
+  def handle_for_token(_resource, _opts) do
+    {:error, :bad_resource}
+  end
+
+  @impl Authex
+  def handle_from_token(token, _opts) do
+    # You may want to perform a database lookup for your user instead
+    {:ok, %MyApp.User{id: token.sub, scopes: token.scopes}}
   end
 end
 ```
@@ -56,19 +79,26 @@ children = [
 We can then create, sign, and verify tokens:
 
 ```elixir
-token = MyApp.Auth.token(sub: 1, scopes: ["admin/read"])
-compact_token = MyApp.Auth.sign(token)
-{:ok, token} = MyApp.Auth.verify(compact_token)
+token = Authex.token(MyApp.Auth, sub: 1, scopes: ["admin/read"])
+compact_token = Authex.sign(MyApp.Auth, token)
+{:ok, token} = Authex.verify(MyApp.Auth, compact_token)
 ```
 
-Please check out the documentation for more advanced features like serializers,
-repositories and integration with plug.
+We can also convert resources to and from tokens.
+
+```elixir
+token = Authex.for_token(MyApp.Auth, user)
+compact_token = Authex.sign(MyApp.Auth, token)
+{:ok, token} = Authex.verify(MyApp.Auth, compact_token)
+{:ok, user} = Authex.from_token(MyApp.Auth, token)
+```
+
+Please check out the documentation for more advanced features.
 
 ## Features
 
 - Easy to integrate with almost any app.
 - Handles both authentication + authorization.
-- Compatible with umbrella apps.
-- Convert data to and from tokens via serializers.
+- Convert data to and from tokens.
 - Handle persistence for things like blacklists.
 - Batteries included for plug integration.

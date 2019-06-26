@@ -9,8 +9,8 @@ defmodule Authex.Signer do
   ]
 
   @doc false
-  def new(auth, opts \\ []) do
-    opts = build_options(auth, opts)
+  def new(module, opts \\ []) do
+    opts = build_options(module, opts)
 
     %Signer{}
     |> put_jwk(opts.secret)
@@ -57,10 +57,10 @@ defmodule Authex.Signer do
     raise Authex.Error, "alg not implemented"
   end
 
-  defp build_options(auth, opts) do
+  defp build_options(module, opts) do
     Enum.into(opts, %{
-      alg: auth.config(:default_alg, :hs256),
-      secret: auth.config(:secret)
+      alg: Authex.config(module, :default_alg, :hs256),
+      secret: Authex.config(module, :secret)
     })
   end
 end
