@@ -3,66 +3,55 @@ defmodule Authex do
   Defines an auth module.
 
   This module provides a simple set of tools for the authorization and authentication
-  required by a typical API through use of JSON web tokens. To get started, we
-  need to define our auth module:
+  required by a typical API through use of JSON web tokens. To begin, we will want
+  to generate a secret from which our tokens will be signed with. There is a convenient
+  mix task available for this:
+
+      mix authex.gen.secret
+
+  We should keep this secret as an environment variable.
+
+  Next, we will want to create our auth module
 
       defmodule MyApp.Auth do
-        use Authex, otp_app: :my_app
+        use Authex
+
+        def start_link(opts \\\\ []) do
+          Authex.start_link(__MODULE__, opts, name: __MODULE__)
+        end
+
+        # Callbacks
+
+        @impl Authex
+        def init(opts) do
+          # Add any configuration listed in Authex.start_link/3
+
+          secret = System.get_env("AUTH_SECRET") || "foobar"
+          opts = Keyword.put(opts, :secret, secret)
+
+          {:ok, opts}
+        end
+
+        @impl Authex
+        def handle_for_token(%MyApp.User{} = resource, opts) do
+          {:ok, [sub: resource.id, scopes: resource.scopes], opts}
+        end
+
+        def handle_for_token(_resource, _opts) do
+          {:error, :bad_resource}
+        end
+
+        @impl Authex
+        def handle_from_token(token, _opts) do
+          # You may want to perform a database lookup for your user instead
+          {:ok, %MyApp.User{id: token.sub, scopes: token.scopes}}
+        end
       end
 
   We must then add the auth module to our supervision tree.
 
       children = [
         MyApp.Auth
-      ]
-
-  ## Configuration
-
-  While our auth module is defined, we will need to further configure it to our
-  requirements. At a minimum, we need to add a secret from which our tokens will
-  be signed with. There is a convenient mix task available for this:
-
-      mix authex.gen.secret
-
-  We should now add this secret to our config. In production this should be set
-  via an env var. We should use the `c:init/1` callback to configure this:
-
-      defmodule MyApp.Auth do
-        use Authex, otp_app: :my_app
-
-        def init(config) do
-          secret = System.get_env("AUTH_SECRET")
-          config = Keyword.put(config, :secret, secret)
-
-          {:ok, config}
-        end
-      end
-
-  Any other config can either be set with the `c:start_link/1` or `c:init/1` callbacks,
-  or via application config. Below are some of the values available:
-
-      config :my_app, MyApp.Auth, [
-        # REQUIRED
-        # The secret used to sign tokens with.
-        secret: "mysecret",
-
-        # OPTIONAL
-        # A blacklist repo, or false if disabled.
-        blacklist: false,
-        # The default algorithm used to sign tokens.
-        default_alg: :hs256,
-        # The default iss claim used in tokens.
-        default_iss: nil,
-        # The default aud claim used in tokens.
-        default_aud: nil,
-        # The default time to live for tokens in seconds.
-        default_ttl: 3600,
-        # The default module, function, and arg used to generate the jti claim.
-        jti_mfa: {Authex.UUID, :generate, []},
-        # The plug called when an unauthorized status is determined.
-        unauthorized: Authex.Plug.Unauthorized,
-        # The plug called when an forbidden status is determined.
-        forbidden: Authex.Plug.Forbidden
       ]
 
   ## Tokens
@@ -74,72 +63,48 @@ defmodule Authex do
 
   #### Creating
 
-  We can easily create token structs using the `c:token/2` function.
+  We can easily create token structs using the `token/3` function.
+
+      Authex.token(MyApp.Auth, sub: 1, scopes: ["admin/read"])
 
 
-      MyApp.Auth.token(sub: 1, scopes: ["admin/read"])
-
-
-  The above would create a token struct for a user with an id of 1 and with
+  The above would create a token struct for a resource with an id of 1 and with
   "admin/read" authorization.
 
   #### Signing
 
-  Once we have a token struct, we can sign it using the `c:sign/2` function to
+  Once we have a token struct, we can sign it using the `sign/3` function to
   create a compact token binary. This is what we will use for authentication and
   authorization for our API.
 
-      [sub: 1, scopes: ["admin/read"]]
-      |> MyApp.Auth.token()
-      |> MyApp.Auth.sign()
+      token = Authex.token(MyApp.Auth, sub: 1, scopes: ["admin/read"])
+      Authex.sign(MyApp.Auth, token)
 
   #### Verifying
 
   Once we have a compact token binary, we can verify it and turn it back to an
-  token struct using the `c:verify/2` function.
+  token struct using the `verify/3` function.
 
-      [sub: 1, scopes: ["admin/read"]]
-      |> MyApp.Auth.token()
-      |> MyApp.Auth.sign()
-      |> MyApp.Auth.verify()
+      token = Authex.token(MyApp.Auth, sub: 1, scopes: ["admin/read"])
+      compact_token = Authex.sign(MyApp.Auth, token)
+      {:ok, token} = Authex.verify(MyApp.Auth, compact_token)
 
-  ## Serializers
+  ## Callbacks
 
   Typically, we want to be able to create tokens from another source of data.
   This could be something like a `User` struct. We also will want to take a token
   and turn it back into a `User` struct.
 
-  To do this, we must create a serializer. A serializer is simply a module that
-  adopts the `Authex.Serializer` behaviour. For more information on creating
-  serializers, please see the `Authex.Serializer` documentation.
+  To do this, we must implement callbacks. For our auth module above, we can
+  convert a user to a token.
 
-  Once we have created our serializer, we define it in our config.
+        token = Authex.for_token(MyApp.Auth, user)
+        compact_token = Authex.sign(MyApp.Auth, token)
 
-      config :my_app, MyApp.Auth, [
-        serializer: MyApp.Auth.UserSerializer,
-      ]
+  As well as turn a token back into a user.
 
-  We can now easily create tokens and compact tokens from our custom data using
-  the `c:for_token/2` and `c:for_compact_token/3` functions.
-
-
-      user = %MyApp.User{id: 1, scopes: []}
-
-      {:ok, token} = MyApp.Auth.for_token(user) # returns a token struct
-      {:ok, compact_token} = MyApp.Auth.for_compact_token(user) # returns a compact token
-
-
-  We can also turn tokens and compact tokens back into our custom data using the
-  `c:from_token/2` and `c:from_compact_token/2` functions.
-
-
-      user = %MyApp.User{id: 1, scopes: []}
-
-      {:ok, token} = MyApp.Auth.for_token(user)
-      {:ok, user} = MyApp.Auth.from_token(token)
-
-      {:ok, compact_token} = MyApp.Auth.for_compact_token(user)
-      {:ok, user} = MyApp.Auth.from_compact_token(compact_token)
+        token = Authex.verify(MyApp.Auth, compact_token)
+        user = Authex.from_token(MyApp.Auth, token)
 
   ## Repositories
 
@@ -150,13 +115,10 @@ defmodule Authex do
   adopts the `Authex.Repo` behaviour. For more information on creating
   repositories, please see the `Authex.Repo` documentation.
 
-  Once we have created our blacklist, we define it in our config.
+  Once we have created our blacklist, we define it in our opts when starting our
+  auth module or in the `c:init/1` callback.
 
-      config :my_app, MyApp.Auth, [
-        blacklist: MyApp.Auth.Blacklist
-      ]
-
-  During the verification process used by `c:verify/2`, any blacklist defined in
+  During the verification process used by `verify/3`, any blacklist defined in
   our config will be checked against. Please be aware of any performance
   penatly that may be incurred through use of database-backed repo's without use
   of caching.
@@ -173,6 +135,8 @@ defmodule Authex do
   documentation.
   """
 
+  alias Authex.{Repo, Server, Signer, Token, Verifier}
+
   @type alg :: :hs256 | :hs384 | :hs512
   @type signer_option :: {:alg, alg()} | {:secret, binary()}
   @type signer_options :: [signer_option()]
@@ -182,8 +146,43 @@ defmodule Authex do
           | {:secret, binary()}
           | {:blacklist, Authex.Blacklist.t()}
   @type verifier_options :: [verifier_option()]
-  @type conn :: %{__struct__: Plug.Conn}
+  @type option ::
+          {:secret, binary()}
+          | {:blacklist, module() | false}
+          | {:default_alg, alg()}
+          | {:default_iss, binary()}
+          | {:default_aud, binary()}
+          | {:default_sub, binary() | integer()}
+          | {:default_jti, mfa() | binary() | false}
+          | {:unauthorized, module()}
+          | {:forbidden, module()}
+  @type options :: [option()]
   @type t :: module()
+
+  @doc """
+  A callback executed when the auth process starts.
+
+  This should be used to dynamically set any config during runtime - such as the
+  secret key used to sign tokens with.
+
+  Returns `{:ok, opts}` or `:ignore`.
+
+  ## Example
+
+      def init(opts) do
+        secret = System.get_env("AUTH_SECRET")
+        opts = Keyword.put(opts, :secret, secret)
+
+        {:ok, opts}
+      end
+  """
+  @callback init(options()) :: {:ok, options()} | :ignore
+
+  @callback handle_for_token(resource :: any(), Keyword.t()) ::
+              {:ok, Authex.Token.claims(), signer_options()} | {:error, any()}
+
+  @callback handle_from_token(Authex.Token.t(), Keyword.t()) ::
+              {:ok, resource :: any()} | {:error, any()}
 
   @doc """
   Starts the auth process.
@@ -195,28 +194,19 @@ defmodule Authex do
 
   ## Options
 
-  See the configuration in the moduledoc for options.
+    * `:secret` -  The secret used to sign tokens with.
+    * `:blacklist` - A blacklist repo, or false if disabled - defaults to `false`.
+    * `:default_alg` - The default algorithm used to sign tokens - defaults to `:hs256`.
+    * `:default_iss` - The default iss claim used in tokens.
+    * `:default_aud` - The default aud claim used in tokens.
+    * `:default_ttl` - The default time to live for tokens in seconds.
+    * `:default_jti` - The default mfa used to generate the jti claim. Can be `false`
+      if you do not want to generate one - defaults to `{Authex.UUID, :generate, []}`.
   """
-  @callback start_link(config :: Keyword.t()) :: GenServer.on_start()
-
-  @doc """
-  A callback executed when the auth process starts.
-
-  This should be used to dynamically set any config during runtime - such as the
-  secret key used to sign tokens with.
-
-  Returns `{:ok, config}`.
-
-  ## Example
-
-      def init(config) do
-        secret = System.get_env("AUTH_SECRET")
-        config = Keyword.put(config, :secret, secret)
-
-        {:ok, config}
-      end
-  """
-  @callback init(config :: Keyword.t()) :: {:ok, Keyword.t()}
+  @spec start_link(Authex.t(), options(), GenServer.options()) :: GenServer.on_start()
+  def start_link(module, opts \\ [], server_opts \\ []) do
+    Server.start_link(module, opts, server_opts)
+  end
 
   @doc """
   Creates a new token.
@@ -229,14 +219,16 @@ defmodule Authex do
   ## Options
     * `:time` - The base time (timestamp format) in which to use.
     * `:ttl` - The time-to-live for the token in seconds. The lifetime is based
-    on the time provided via the options, or the current time if not provided.
+      on the time provided via the options, or the current time if not provided.
 
   ## Example
 
-      MyApp.Auth.token(sub: 1, scopes: ["admin/read"])
+      Authex.token(MyAuth, sub: 1, scopes: ["admin/read"])
   """
-  @callback token(claims :: Authex.Token.claims(), options :: Authex.Token.options()) ::
-              Authex.Token.t()
+  @spec token(Authex.t(), Authex.Token.claims(), Authex.Token.options()) :: Authex.Token.t()
+  def token(module, claims \\ [], opts \\ []) do
+    Token.new(module, claims, opts)
+  end
 
   @doc """
   Signs a token, creating a compact token.
@@ -252,12 +244,31 @@ defmodule Authex do
 
   ## Options
     * `:secret` - The secret key to sign the token with.
-    * `:alg` - The algorithm to sign the token with.
+    * `:alg` - The algorithm to sign the token with - defaults to `:hs256`
 
   Any option provided would override the default set in the config.
   """
-  @callback sign(token :: Authex.Token.t(), signer_options()) ::
-              Authex.Token.compact() | no_return()
+  @spec sign(Authex.t(), Authex.Token.t(), signer_options()) :: binary()
+  def sign(module, %Authex.Token{} = token, opts \\ []) do
+    module
+    |> Signer.new(opts)
+    |> Signer.compact(token)
+  end
+
+  @doc """
+  Generates a compact token from a set of claims.
+
+  This is simply a shortened version of calling `token/3` and `sign/3`.
+
+  ## Options
+
+  All options are the same available in `token/3` and `sign/3`.
+  """
+  @spec compact_token(Authex.t(), Authex.Token.claims(), signer_options()) :: binary()
+  def compact_token(module, claims \\ [], opts \\ []) do
+    token = token(module, claims, opts)
+    sign(module, token, opts)
+  end
 
   @doc """
   Verifies a compact token.
@@ -271,6 +282,8 @@ defmodule Authex do
 
   If all checks pass, the token is deemed verified.
 
+  Returns `{:ok, token}` or `{:error, reason}`.
+
   ## Options
     * `:time` - The base time (timestamp format) in which to use.
     * `:secret` - The secret key to verify the token with.
@@ -279,149 +292,211 @@ defmodule Authex do
 
   Any option provided would override the default set in the config.
 
-  Returns `{:ok, token}` or `{:error, reason}`.
+  ## Example
+
+      {:ok, token} = Authex.verify(MyAuth, compact_token)
+  """
+  @spec verify(Authex.t(), binary(), verifier_options()) ::
+          {:ok, Authex.Token.t()}
+          | {:error,
+             :bad_token
+             | :not_ready
+             | :expired
+             | :blacklisted
+             | :blacklist_error
+             | :jti_unverified}
+  def verify(module, compact_token, opts \\ []) do
+    Verifier.run(module, compact_token, opts)
+  end
+
+  @doc """
+  Refreshes an `Authex.Token` into a new `Authex.Token`.
+
+  When using this function, the assumption has already been made that you have
+  verified it with `verify/3`. This will extract the following claims from the
+  original token:
+
+    * `:sub`
+    * `:iss`
+    * `:aud`
+    * `:scopes`
+    * `:meta`
+
+  It will then take these claims and generate a new token with them.
+
+  ## Options
+
+  Please see the options available at `token/3`.
 
   ## Example
 
-      {:ok, token} = MyApp.Auth.verify(compact_token)
+      token = Authex.refresh(token)
   """
-  @callback verify(compact_token :: Authex.Token.compact(), options :: verifier_options()) ::
-              {:ok, Authex.Token.t()} | {:error, term()}
+  @spec refresh(Authex.t(), Authex.Token.t(), Authex.Token.options()) :: Authex.Token.t()
+  def refresh(module, token, opts \\ []) do
+    claims =
+      token
+      |> Map.from_struct()
+      |> Enum.into([])
+      |> Keyword.take([:sub, :iss, :aud, :scopes, :meta])
+
+    token(module, claims, opts)
+  end
 
   @doc """
-  Converts an `Authex.Token` struct into a resource.
+  Converts an `Authex.Token` into a resource.
 
-  This uses the serializer defined in the auth config. It will invoke the
-  `c:Authex.Serializer.from_token/2` callback defined in the serializer module.
-  Please see the `Authex.Serializer` documentation for more details on implementing
-  a serializer.
+  This invokes the `c:handle_from_token/2` defined in the auth module. Please see
+  the callback docs for further details.
 
   Returns `{:ok, resource}` or `{:error, reason}`.
 
   ## Options
 
-  Any additional options your serializer might need.
+  You can also include any additional options your callback might need.
 
   ## Example
 
-      {:ok, user} = MyApp.Auth.from_token(token)
+      {:ok, user} = Authex.from_token(token)
   """
-  @callback from_token(token :: Authex.Token.t(), options :: Keyword.t()) ::
-              {:ok, term()} | {:error, term()}
+  @spec from_token(Authex.t(), Authex.Token.t(), verifier_options() | Keyword.t()) ::
+          {:ok, any()} | {:error, any()}
+  def from_token(module, %Token{} = token, opts \\ []) do
+    module.handle_from_token(token, opts)
+  end
 
   @doc """
-  Verifies and converts a compact token into a resource.
+  Converts a resource into an `Authex.Token`.
 
-  Once verified, this invokes `c:from_token/2` with the verified token. Please see
-  `c:from_token/2` for additional details.
+  This invokes the `c:handle_for_token/2` callback defined in the auth module. Please
+  see the callback docs for further details.
 
-  Returns `{:ok, resource}` or `{:error, reason}`.
+  Returns `{:ok, token}` or `{:error, reason}`
 
   ## Options
 
-  Please see the options available in `c:verify/2`. You can also include any
-  additional options your serializer might need.
+  Please see the options available in `c:token/3`. You can also include any
+  additional options your callback might need.
 
   ## Example
 
-      {:ok, user} = MyApp.Auth.from_compact_token(compact_token)
+      {:ok, token} = Authex.for_token(MyAuth, user)
   """
-  @callback from_compact_token(
-              compact_token :: Authex.Token.compact(),
-              verifier_options()
-            ) :: {:ok, term()} | {:error, atom}
+  @spec for_token(Authex.t(), resource :: any(), signer_options() | Keyword.t()) ::
+          {:ok, Authex.Token.t()} | {:error, any()}
+  def for_token(module, resource, opts \\ []) do
+    with {:ok, claims, opts} <- module.handle_for_token(resource, opts) do
+      {:ok, token(module, claims, opts)}
+    end
+  end
 
   @doc """
-  Converts a resource into an `Authex.Token` struct.
+  Gets the current resource from a `Plug.Conn`.
 
-  This uses the serializer defined in the auth config. It will invoke the
-  `c:Authex.Serializer.for_token/2` callback defined in the serializer module.
-  Please see the `Authex.Serializer` documentation for more details on implementing
-  a serializer.
+  The resource will only be accessible if the `conn` has been run through the
+  `Authex.Plug.Authentication` plug.
 
-  Returns `{:ok, token}` or `{:error, reason}`.
-
-  ## Options
-
-  Please see the options available in `c:token/2`.
-
-  ## Example
-
-      {:ok, token} = MyApp.Auth.for_token(user)
+  Returns `{:ok, resource}` or `:error`.
   """
-  @callback for_token(term(), options :: Authex.Token.options()) ::
-              {:ok, Authex.Token.t()} | {:error, term()}
+  @spec current_resource(conn :: Plug.Conn.t()) :: {:ok, any()} | :error
+  def current_resource(_conn = %{private: private}) do
+    Map.fetch(private, :authex_resource)
+  end
 
-  @doc """
-  Converts a resource into a compact token.
-
-  Returns `{:ok, compact_token}` or `{:error, reason}`
-
-  ## Options
-
-  Please see the options available in `c:token/2`.
-
-  ## Example
-
-      {:ok, compact_token} = MyApp.Auth.for_compact_token(user)
-  """
-  @callback for_compact_token(term(), token_opts :: Authex.Token.options(), signer_options()) ::
-              {:ok, Authex.Token.compact()} | {:error, term()}
-
-  @doc """
-  Gets the current user from a `Plug.Conn`.
-
-  Returns `{:ok, user}` or `:error`.
-  """
-  @callback current_user(conn()) :: {:ok, term()} | :error
+  def current_resource(_) do
+    :error
+  end
 
   @doc """
   Gets the current scopes from a `Plug.Conn`.
 
+  The scopes will only be accessible if the `conn` has been run through the
+  `Authex.Plug.Authentication` plug.
+
   Returns `{:ok, scopes}` or `:error`.
   """
-  @callback current_scopes(conn()) :: {:ok, list()} | :error
+  @spec current_scopes(conn :: Plug.Conn.t()) :: {:ok, [binary()]} | :error
+  def current_scopes(conn) do
+    with {:ok, token} <- current_token(conn) do
+      Map.fetch(token, :scopes)
+    end
+  end
+
+  @doc """
+  Gets the current scope from a `Plug.Conn`.
+
+  The scope will only be accessible if the `conn` has been run through the
+  `Authex.Plug.Authorization` plug.
+
+  Returns `{:ok, scope}` or `:error`.
+  """
+  @spec current_scope(conn :: Plug.Conn.t()) :: {:ok, [binary()]} | :error
+  def current_scope(_conn = %{private: private}) do
+    Map.fetch(private, :authex_scope)
+  end
+
+  def current_scope(_) do
+    :error
+  end
 
   @doc """
   Gets the current token from a `Plug.Conn`.
 
+  The token will only be accessible if the `conn` has been run through the
+  `Authex.Plug.Authentication` plug.
+
   Returns `{:ok, token}` or `:error`.
   """
-  @callback current_token(conn()) :: {:ok, Authex.Token.t()} | :error
+  @spec current_token(conn :: Plug.Conn.t()) :: {:ok, Authex.Token.t()} | :error
+  def current_token(_conn = %{private: private}) do
+    Map.fetch(private, :authex_token)
+  end
+
+  def current_token(_) do
+    :error
+  end
 
   @doc """
   Checks whether a token jti is blacklisted.
 
   This uses the blaclist repo defined in the auth config. The key is the `:jti`
-  key in the token.
+  claim in the token.
 
   Returns a boolean.
 
   ## Example
 
-      MyApp.Auth.blacklisted?(token)
+      Authex.blacklisted?(MyAuth, token)
   """
-  @callback blacklisted?(token :: Authex.Token.t()) :: boolean
+  @spec blacklisted?(Authex.t(), Authex.Token.t()) :: boolean() | :error
+  def blacklisted?(module, %Authex.Token{jti: jti}) do
+    blacklist = config(module, :blacklist, false)
+    Repo.exists?(blacklist, jti)
+  end
 
   @doc """
   Blacklists a token jti.
 
   This uses the blaclist repo defined in the auth config. The key is the `:jti`
-  key in the token.
+  claim in the token.
 
   Returns `:ok` on success, or `:error` on failure.
 
   ## Example
 
-      MyApp.Auth.blacklist(token)
+      Authex.blacklist(MyAuth, token)
   """
-  @callback blacklist(token :: Authex.Token.t()) :: :ok | :error
+  @spec blacklist(Authex.t(), Authex.Token.t()) :: :ok | :error
+  def blacklist(module, %Authex.Token{jti: jti}) do
+    blacklist = config(module, :blacklist, false)
+    Repo.insert(blacklist, jti)
+  end
 
   @doc """
   Unblacklists a token jti.
 
   This uses the blaclist repo defined in the auth config. The key is the `:jti`
-  key in the token.
+  claim in the token.
 
   Returns `:ok` on success, or `:error` on failure.
 
@@ -429,184 +504,44 @@ defmodule Authex do
 
       MyApp.Auth.unblacklist(token)
   """
-  @callback unblacklist(token :: Authex.Token.t()) :: :ok | :error
-
-  @doc """
-  Saves the config that is currently associated with our auth module.
-  """
-  @callback save_config() :: :ok | :error
-
-  @doc """
-  Sets the config that is used with our auth module.
-  """
-  @callback save_config(keyword()) :: :ok | :error
-
-  @doc """
-  Sets a single config that is used with our auth module.
-  """
-  @callback save_config(atom(), any()) :: :ok | :error
+  @spec unblacklist(Authex.t(), Authex.Token.t()) :: :ok | :error
+  def unblacklist(module, %Authex.Token{jti: jti}) do
+    blacklist = config(module, :blacklist, false)
+    Repo.delete(blacklist, jti)
+  end
 
   @doc """
   Fetches a config value.
-  """
-  @callback config(key :: atom(), default :: any()) :: any()
 
-  defmacro __using__(opts) do
-    quote bind_quoted: [opts: opts] do
+  ## Example
+
+      Authex.config(MyAuth, :secret)
+  """
+  @spec config(Authex.t(), atom(), any()) :: any()
+  def config(module, key, default \\ nil) do
+    Server.config(module, key, default)
+  end
+
+  defmacro __using__(_opts) do
+    quote do
       @behaviour Authex
 
-      @otp_app Keyword.fetch!(opts, :otp_app)
-      @table_name :"#{__MODULE__}.Config"
+      if Module.get_attribute(__MODULE__, :doc) == nil do
+        @doc """
+        Returns a specification to start this Authex process under a supervisor.
 
-      @impl Authex
-      def start_link(config \\ []) do
-        config = @otp_app |> Application.get_env(__MODULE__, []) |> Keyword.merge(config)
-
-        with {:ok, pid} <- GenServer.start_link(__MODULE__, config, name: __MODULE__) do
-          save_config()
-          {:ok, pid}
-        end
+        See `Supervisor`.
+        """
       end
 
-      @impl Authex
-      def init(config) do
-        {:ok, config}
-      end
-
-      @impl Authex
-      def token(claims \\ [], opts \\ []) do
-        Authex.Token.new(__MODULE__, claims, opts)
-      end
-
-      @impl Authex
-      def sign(%Authex.Token{} = token, opts \\ []) do
-        __MODULE__
-        |> Authex.Signer.new(opts)
-        |> Authex.Signer.compact(token)
-      end
-
-      @impl Authex
-      def verify(compact_token, opts \\ []) do
-        Authex.Verifier.run(__MODULE__, compact_token, opts)
-      end
-
-      @impl Authex
-      def from_token(%Authex.Token{} = token, opts \\ []) do
-        serializer = config(:serializer)
-        Authex.Serializer.from_token(serializer, token, opts)
-      end
-
-      @impl Authex
-      def from_compact_token(compact_token, opts \\ []) when is_binary(compact_token) do
-        with {:ok, token} <- verify(compact_token, opts) do
-          from_token(token, opts)
-        end
-      end
-
-      @impl Authex
-      def for_token(resource, opts \\ []) do
-        serializer = config(:serializer)
-        Authex.Serializer.for_token(serializer, resource, opts)
-      end
-
-      @impl Authex
-      def for_compact_token(resource, token_opts \\ [], signer_opts \\ []) do
-        with {:ok, token} <- for_token(resource, token_opts) do
-          {:ok, sign(token, signer_opts)}
-        end
-      end
-
-      @impl Authex
-      def current_user(%{private: private}) do
-        Map.fetch(private, :authex_current_user)
-      end
-
-      def current_user(_) do
-        :error
-      end
-
-      @impl Authex
-      def current_scopes(conn) do
-        with {:ok, token} <- current_token(conn) do
-          Map.fetch(token, :scopes)
-        end
-      end
-
-      @impl Authex
-      def current_token(%{private: private}) do
-        Map.fetch(private, :authex_token)
-      end
-
-      def current_token(_) do
-        :error
-      end
-
-      @impl Authex
-      def blacklisted?(%Authex.Token{jti: jti}) do
-        blacklist = config(:blacklist, false)
-        Authex.Repo.exists?(blacklist, jti)
-      end
-
-      @impl Authex
-      def blacklist(%Authex.Token{jti: jti}) do
-        blacklist = config(:blacklist, false)
-        Authex.Repo.insert(blacklist, jti)
-      end
-
-      @impl Authex
-      def unblacklist(%Authex.Token{jti: jti}) do
-        blacklist = config(:blacklist, false)
-        Authex.Repo.delete(blacklist, jti)
-      end
-
-      @impl Authex
-      def config(key, default \\ nil) do
-        @table_name
-        |> Authex.Config.read()
-        |> Keyword.get(key, default)
-      end
-
-      @impl Authex
-      def save_config do
-        GenServer.call(__MODULE__, :save_config)
-      end
-
-      @impl Authex
-      def save_config(config) when is_list(config) do
-        GenServer.call(__MODULE__, {:save_config, config})
-      end
-
-      @impl Authex
-      def save_config(key, value) do
-        GenServer.call(__MODULE__, {:save_config, key, value})
-      end
-
-      def child_spec(config) do
+      def child_spec(args) do
         %{
           id: __MODULE__,
-          start: {__MODULE__, :start_link, [config]}
+          start: {__MODULE__, :start_link, [args]}
         }
       end
 
-      # GenServer callbacks
-
-      def handle_call(:save_config, _from, config) do
-        Authex.Config.save(@table_name, config)
-        {:reply, :ok, config}
-      end
-
-      def handle_call({:save_config, config}, _from, _config) do
-        Authex.Config.save(@table_name, config)
-        {:reply, :ok, config}
-      end
-
-      def handle_call({:save_config, key, value}, _from, old_config) do
-        config = Keyword.put(old_config, key, value)
-        Authex.Config.save(@table_name, config)
-        {:reply, :ok, config}
-      end
-
-      defoverridable init: 1
+      defoverridable(child_spec: 1)
     end
   end
 end

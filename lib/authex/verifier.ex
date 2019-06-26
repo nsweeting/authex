@@ -4,9 +4,9 @@ defmodule Authex.Verifier do
   alias Authex.{Repo, Signer, Token}
 
   @doc false
-  def run(auth, compact_token, opts) do
-    signer = Signer.new(auth, opts)
-    opts = build_options(auth, opts)
+  def run(module, compact_token, opts) do
+    signer = Signer.new(module, opts)
+    opts = build_options(module, opts)
 
     with {:ok, claims} <- check_token(signer.jwk, signer.jws, compact_token),
          token <- Token.from_map(claims),
@@ -67,10 +67,10 @@ defmodule Authex.Verifier do
     {:error, :jti_unverified}
   end
 
-  defp build_options(auth, opts) do
+  defp build_options(module, opts) do
     Enum.into(opts, %{
       time: :os.system_time(:seconds),
-      blacklist: auth.config(:blacklist, false)
+      blacklist: Authex.config(module, :blacklist, false)
     })
   end
 end
