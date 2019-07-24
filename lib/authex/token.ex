@@ -39,7 +39,7 @@ defmodule Authex.Token do
   @type claims :: [claim]
   @type option ::
           {:time, integer}
-          | {:ttl, integer}
+          | {:ttl, integer | :infinity}
   @type options :: [option]
   @type compact :: binary
 
@@ -48,7 +48,7 @@ defmodule Authex.Token do
 
   ## Options
     * `:time` - the base time (timestamp format) in which to use.
-    * `:ttl` - the TTL for the token.
+    * `:ttl` - the TTL for the token or `:infinity` if no expiration is required.
 
   ## Examples
 
@@ -101,6 +101,10 @@ defmodule Authex.Token do
   end
 
   @doc false
+  def put_exp(token, _time, :infinity) do
+    %{token | exp: nil}
+  end
+
   def put_exp(token, time, ttl) do
     %{token | exp: time + ttl}
   end
