@@ -58,6 +58,11 @@ defmodule AuthexTest do
       assert %Token{exp: 20} = Authex.token(Auth, [], time: 0)
     end
 
+    test "can set an infinity exp through the ttl option" do
+      start_supervised(Auth, id: :one)
+      assert %Token{exp: nil} = Authex.token(Auth, [], ttl: :infinity)
+    end
+
     test "uses 3600 seconds as the default ttl" do
       start_supervised(Auth)
       assert %Token{exp: 3600} = Authex.token(Auth, [], time: 0)

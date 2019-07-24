@@ -218,8 +218,9 @@ defmodule Authex do
 
   ## Options
     * `:time` - The base time (timestamp format) in which to use.
-    * `:ttl` - The time-to-live for the token in seconds. The lifetime is based
-      on the time provided via the options, or the current time if not provided.
+    * `:ttl` - The time-to-live for the token in seconds or `:infinity` if no expiration
+      is required. The lifetime is based on the time provided via the options,
+      or the current time if not provided.
 
   ## Example
 
