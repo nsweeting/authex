@@ -1,7 +1,7 @@
 defmodule Authex.Secret do
   @moduledoc false
 
-  @spec new(integer) :: binary | :error
+  @spec new(integer) :: {:ok, binary} | :error
   def new(length \\ 64)
 
   def new(length) when is_integer(length) and length > 31 do

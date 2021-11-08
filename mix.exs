@@ -1,7 +1,7 @@
 defmodule Authex.Mixfile do
   use Mix.Project
 
-  @version "2.1.1"
+  @version "2.2.0"
 
   def project do
     [
@@ -64,10 +64,10 @@ defmodule Authex.Mixfile do
   defp deps do
     [
       {:keyword_validator, "~> 1.0"},
-      {:jose, "~> 1.8"},
+      {:jose, "~> 1.11"},
       {:jason, "~> 1.0", optional: true},
-      {:plug, "~> 1.0", optional: true},
-      {:ex_doc, "~> 0.20", only: :dev, runtime: false}
+      {:plug, "~> 1.12", optional: true},
+      {:ex_doc, "~> 0.24", only: :dev, runtime: false}
     ]
   end
 end

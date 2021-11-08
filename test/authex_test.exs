@@ -127,7 +127,7 @@ defmodule AuthexTest do
       start_supervised(Auth)
       token = Authex.token(Auth)
       compact_token = Authex.sign(Auth, token)
-      assert {:ok, token} = Authex.verify(Auth, compact_token)
+      assert {:ok, ^token} = Authex.verify(Auth, compact_token)
     end
   end
 
