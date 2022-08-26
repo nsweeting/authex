@@ -376,7 +376,7 @@ defmodule Authex do
 
   ## Options
 
-  Please see the options available in `c:token/3`. You can also include any
+  Please see the options available in `token/3`. You can also include any
   additional options your callback might need.
 
   ## Example
