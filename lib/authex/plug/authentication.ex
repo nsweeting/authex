@@ -24,7 +24,8 @@ if Code.ensure_loaded?(Plug) do
 
     The plug looks for the `Authorization: Bearer mytoken` header by default. It
     will then verify and covert out token into a resource using the provided auth
-    module.
+    module. You can optionally set a `:param` value to enable tokens from query
+    parameters.
 
     We can then access our current resource from the conn using `Authex.current_resource/1`.
 
@@ -37,6 +38,7 @@ if Code.ensure_loaded?(Plug) do
       * `:with` - The auth module that will be used for verification and token conversion.
       * `:unauthorized` - The plug to call when the token is invalid - defaults to `Authex.Plug.Unauthorized`.
       * `:header` - The header to extract the token from - defaults to `"authorization"`.
+      * `:param` - A query parameter to extract tokens from - defaults to `nil` (no use of params).
     """
 
     @behaviour Plug
@@ -56,7 +58,7 @@ if Code.ensure_loaded?(Plug) do
     @doc false
     @impl Plug
     def call(conn, opts) do
-      with {:ok, compact} <- fetch_header_token(conn, opts),
+      with {:ok, compact} <- fetch_token(conn, opts),
            {:ok, token} <- verify_token(compact, opts),
            {:ok, conn} <- put_token(conn, token),
            {:ok, conn} <- put_current_resource(conn, token, opts) do
@@ -66,9 +68,22 @@ if Code.ensure_loaded?(Plug) do
       end
     end
 
+    defp fetch_token(conn, opts) do
+      with :error <- fetch_header_token(conn, opts) do
+        fetch_param_token(conn, opts)
+      end
+    end
+
     defp fetch_header_token(conn, opts) do
       case get_req_header(conn, opts.header) do
         [header] -> {:ok, parse_header(header)}
+        _ -> :error
+      end
+    end
+
+    defp fetch_param_token(conn, opts) do
+      case opts.param && Map.get(conn.params, opts.param) do
+        val when is_binary(val) -> {:ok, val}
         _ -> :error
       end
     end
@@ -108,6 +123,7 @@ if Code.ensure_loaded?(Plug) do
       %{
         with: Keyword.fetch!(opts, :with),
         header: Keyword.get(opts, :header, "authorization"),
+        param: Keyword.get(opts, :param),
         unauthorized: Keyword.get(opts, :unauthorized, Authex.Plug.Unauthorized)
       }
     end

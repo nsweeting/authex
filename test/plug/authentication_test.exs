@@ -10,6 +10,7 @@ defmodule Authex.Plug.AuthenticationTest do
     test "returns given options if they are provided" do
       assert Authentication.init(with: Foo, unauthorized: Bar, header: "foo") == %{
                header: "foo",
+               param: nil,
                unauthorized: Bar,
                with: Foo
              }
@@ -25,9 +26,16 @@ defmodule Authex.Plug.AuthenticationTest do
   end
 
   describe "call/2" do
-    test "returns a plug with 401 status if authorization is empty" do
+    test "returns a plug with 401 status if auth header is empty" do
       start_supervised(Auth)
       opts = Authentication.init(with: Auth)
+      conn = conn(:get, "/")
+      assert %{status: 401, state: :sent, halted: true} = Authentication.call(conn, opts)
+    end
+
+    test "returns a plug with 401 status if auth param is empty" do
+      start_supervised(Auth)
+      opts = Authentication.init(with: Auth, param: "foo")
       conn = conn(:get, "/")
       assert %{status: 401, state: :sent, halted: true} = Authentication.call(conn, opts)
     end
@@ -58,11 +66,19 @@ defmodule Authex.Plug.AuthenticationTest do
       assert %{status: 401, state: :sent, halted: true} = Authentication.call(conn, opts)
     end
 
-    test "returns a plug with no modifications if authorization is valid" do
+    test "returns a plug with no modifications if header authorization is valid" do
       start_supervised(Auth)
       compact_token = Authex.compact_token(Auth)
       opts = Authentication.init(with: Auth)
       conn = conn(:get, "/") |> put_req_header("authorization", "Bearer #{compact_token}")
+      assert %{status: nil, state: :unset, halted: false} = Authentication.call(conn, opts)
+    end
+
+    test "returns a plug with no modifications if param authorization is valid" do
+      start_supervised(Auth)
+      compact_token = Authex.compact_token(Auth)
+      opts = Authentication.init(with: Auth, param: "token")
+      conn = conn(:get, "/", %{token: compact_token})
       assert %{status: nil, state: :unset, halted: false} = Authentication.call(conn, opts)
     end
 
