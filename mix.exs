@@ -67,7 +67,7 @@ defmodule Authex.Mixfile do
       {:jose, "~> 1.11"},
       {:jason, "~> 1.0", optional: true},
       {:plug, "~> 1.12", optional: true},
-      {:ex_doc, "~> 0.24", only: :dev, runtime: false}
+      {:ex_doc, "~> 0.28", only: :dev, runtime: false}
     ]
   end
 end
