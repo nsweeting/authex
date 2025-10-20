@@ -3,26 +3,47 @@ defmodule Authex.Server do
 
   use GenServer
 
-  @opts_schema %{
-    secret: [type: :binary, required: true],
-    blacklist: [type: [:module, :boolean], required: true, default: false],
-    default_alg: [
-      type: :atom,
-      inclusion: [:hs256, :hs384, :hs512],
-      required: true,
-      default: :hs256
-    ],
-    default_iss: [type: :binary, required: false],
-    default_aud: [type: :binary, required: false],
-    default_ttl: [type: :integer, required: true, default: 3600],
-    default_sub: [type: [:integer, :binary], required: false],
-    default_scopes: [type: {:list, :binary}, required: false],
-    default_jti: [
-      type: [:mfa, :boolean, :binary],
-      required: true,
-      default: {Authex.UUID, :generate, []}
-    ]
-  }
+  @opts_schema KeywordValidator.schema!(
+                 secret: [
+                   is: :binary,
+                   required: true
+                 ],
+                 blacklist: [
+                   is: {:one_of, [:mod, :boolean]},
+                   required: true,
+                   default: false
+                 ],
+                 default_alg: [
+                   is: {:atom, [:hs256, :hs384, :hs512]},
+                   default: :hs256
+                 ],
+                 default_iss: [
+                   is: :binary,
+                   required: false
+                 ],
+                 default_aud: [
+                   is: :binary,
+                   required: false
+                 ],
+                 default_ttl: [
+                   is: :integer,
+                   required: true,
+                   default: 3600
+                 ],
+                 default_sub: [
+                   is: {:one_of, [:integer, :binary]},
+                   required: false
+                 ],
+                 default_scopes: [
+                   is: {:list, :binary},
+                   required: false
+                 ],
+                 default_jti: [
+                   is: {:one_of, [:mfa, :boolean, :binary]},
+                   required: true,
+                   default: {Authex.UUID, :generate, []}
+                 ]
+               )
 
   ################################
   # Public API
