@@ -63,7 +63,7 @@ defmodule Authex.Mixfile do
 
   defp deps do
     [
-      {:keyword_validator, "~> 1.0"},
+      {:keyword_validator, "~> 2.0"},
       {:jose, "~> 1.11"},
       {:jason, "~> 1.0", optional: true},
       {:plug, "~> 1.12", optional: true},
