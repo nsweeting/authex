@@ -1,16 +1,18 @@
 defmodule Authex.Mixfile do
   use Mix.Project
 
-  @version "2.3.0"
+  @version "2.4.0"
 
   def project do
     [
       app: :authex,
       version: @version,
-      elixir: "~> 1.5",
+      elixir: "~> 1.16",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       deps: deps(),
+      aliases: aliases(),
+      preferred_cli_env: preferred_cli_env(),
       description: description(),
       package: package(),
       name: "Authex",
@@ -39,6 +41,30 @@ defmodule Authex.Mixfile do
       maintainers: ["Nicholas Sweeting"],
       licenses: ["MIT"],
       links: %{"GitHub" => "https://github.com/nsweeting/authex"}
+    ]
+  end
+
+  # Aliases are shortcuts or tasks specific to the current project.
+  defp aliases do
+    [
+      setup: [
+        "local.hex --if-missing --force",
+        "local.rebar --if-missing --force",
+        "deps.get"
+      ],
+      ci: [
+        "setup",
+        "compile --warnings-as-errors",
+        "format --check-formatted",
+        "test"
+      ]
+    ]
+  end
+
+  # Specifies the preferred env for mix commands.
+  defp preferred_cli_env do
+    [
+      ci: :test
     ]
   end
 
