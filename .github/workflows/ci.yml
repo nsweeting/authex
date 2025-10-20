@@ -1,0 +1,40 @@
+name: CI
+on:
+  push:
+    branches:
+      - master
+
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  test:
+    name: Run tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Elixir and Erlang versions
+        uses: erlef/setup-beam@v1
+        id: setup-elixir
+        with:
+          version-type: strict
+          version-file: .tool-versions
+
+      - name: Restore the cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            deps
+            _build
+            dialyzer
+          key: |
+            ${{ runner.os }}-${{ steps.setup-elixir.outputs.elixir-version }}-${{ steps.setup-elixir.outputs.otp-version }}-mixlockhash-${{ hashFiles(format('{0}{1}', github.workspace, '/mix.lock')) }}
+          restore-keys: |
+            ${{ runner.os }}-${{ steps.setup-elixir.outputs.elixir-version }}-${{ steps.setup-elixir.outputs.otp-version }}-mixlockhash-
+
+      - name: Run CI
+        run: |
+          mix ci
